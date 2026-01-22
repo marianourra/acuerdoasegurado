@@ -19,6 +19,7 @@ export default function Dashboard() {
     if (!user) return;
   
     async function loadClaims() {
+      if (!user) return; // Guard against null user
       setLoading(true);
       setErrMsg(null);
   

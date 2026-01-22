@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import UserProfile from '../components/UserProfile';
 import Sidebar from '../components/Sidebar';
-import logo from '../images/logo.PNG';
+import logo from '../images/logo.png';
 
 type Props = {
   children: ReactNode;
