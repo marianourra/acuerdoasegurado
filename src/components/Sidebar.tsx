@@ -1,6 +1,11 @@
 import { Link, useLocation } from 'react-router-dom';
 
-export default function Sidebar() {
+type SidebarProps = {
+  isOpen?: boolean;
+  onClose?: () => void;
+};
+
+export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
   const location = useLocation();
 
   const menuItems = [
@@ -80,18 +85,21 @@ export default function Sidebar() {
   ];
 
   return (
-    <aside
-      style={{
-        width: 260,
-        background: 'white',
-        borderRight: '1px solid #e2e8f0',
-        padding: '24px 0',
-        height: 'calc(100vh - 70px)',
-        position: 'sticky',
-        top: 70,
-        overflowY: 'auto',
-      }}
-    >
+    <>
+      <aside
+        style={{
+          width: 260,
+          background: 'white',
+          borderRight: '1px solid #e2e8f0',
+          padding: '24px 0',
+          height: 'calc(100vh - 70px)',
+          position: 'sticky',
+          top: 70,
+          overflowY: 'auto',
+          transition: 'transform 0.3s ease',
+        }}
+        className="sidebar-desktop"
+      >
       <nav style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
         {menuItems.map((item) => {
           const isActive =
@@ -136,5 +144,81 @@ export default function Sidebar() {
         })}
       </nav>
     </aside>
+    <aside
+      style={{
+        width: 260,
+        background: 'white',
+        borderRight: '1px solid #e2e8f0',
+        padding: '24px 0',
+        height: 'calc(100vh - 70px)',
+        position: 'fixed',
+        top: 70,
+        left: 0,
+        overflowY: 'auto',
+        zIndex: 99,
+        transform: isOpen ? 'translateX(0)' : 'translateX(-100%)',
+        transition: 'transform 0.3s ease',
+        boxShadow: '2px 0 8px rgba(0, 0, 0, 0.1)',
+      }}
+      className="sidebar-mobile"
+    >
+      <nav style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        {menuItems.map((item) => {
+          const isActive =
+            location.pathname === item.path ||
+            (item.path === '/dashboard' && location.pathname.startsWith('/claims')) ||
+            (item.path === '/benefits' && location.pathname.startsWith('/benefits')) ||
+            (item.path === '/payments' && location.pathname.startsWith('/payments'));
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              onClick={onClose}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                padding: '12px 24px',
+                textDecoration: 'none',
+                color: isActive ? '#667eea' : '#64748b',
+                background: isActive ? '#f0f4ff' : 'transparent',
+                borderLeft: isActive ? '3px solid #667eea' : '3px solid transparent',
+                fontWeight: isActive ? 600 : 500,
+                fontSize: 15,
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                if (!isActive) {
+                  e.currentTarget.style.background = '#f8fafc';
+                  e.currentTarget.style.color = '#334155';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isActive) {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.color = '#64748b';
+                }
+              }}
+            >
+              <span style={{ display: 'flex', alignItems: 'center' }}>{item.icon}</span>
+              <span>{item.label}</span>
+            </Link>
+          );
+        })}
+      </nav>
+    </aside>
+    <style>{`
+      @media (max-width: 768px) {
+        .sidebar-desktop {
+          display: none !important;
+        }
+      }
+      @media (min-width: 769px) {
+        .sidebar-mobile {
+          display: none !important;
+        }
+      }
+    `}</style>
+    </>
   );
 }

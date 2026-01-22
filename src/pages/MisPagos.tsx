@@ -54,7 +54,7 @@ export default function MisPagos() {
   return (
     <MainLayout>
       <div>
-        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700, color: '#0f172a', marginBottom: 24 }}>
+        <h1 style={{ margin: 0, fontSize: 'clamp(24px, 5vw, 28px)', fontWeight: 700, color: '#0f172a', marginBottom: 24 }}>
           Mis pagos
         </h1>
 
@@ -86,11 +86,12 @@ export default function MisPagos() {
               No hay transferencias registradas aún.
             </p>
           ) : (
-            <div style={{ overflowX: 'auto' }}>
+            <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
               <table
                 style={{
                   width: '100%',
                   borderCollapse: 'collapse',
+                  minWidth: 600,
                 }}
               >
                 <thead>

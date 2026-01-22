@@ -57,12 +57,12 @@ export default function MisBeneficios() {
   return (
     <MainLayout>
       <div>
-        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700, color: '#0f172a', marginBottom: 24 }}>
+        <h1 style={{ margin: 0, fontSize: 'clamp(24px, 5vw, 28px)', fontWeight: 700, color: '#0f172a', marginBottom: 24 }}>
           Mis beneficios
         </h1>
 
         {/* Resumen */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 16, marginBottom: 32 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 32 }}>
           <div
             style={{
               background: 'white',

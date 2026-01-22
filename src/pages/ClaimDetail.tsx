@@ -78,9 +78,9 @@ export default function ClaimDetail() {
           background: '#fff',
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-          <div>
-            <h2 style={{ margin: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <h2 style={{ margin: 0, fontSize: 'clamp(18px, 4vw, 24px)', wordBreak: 'break-word' }}>
               Reclamo #{claim.claim_number} — {claim.client_name}
             </h2>
 
@@ -122,7 +122,7 @@ export default function ClaimDetail() {
             <div style={{ marginTop: 4 }}>{claim.description}</div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
             <div>
               <strong>Monto reclamado</strong>
               <div style={{ marginTop: 4 }}>

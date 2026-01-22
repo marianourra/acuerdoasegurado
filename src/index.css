@@ -10,3 +10,18 @@ body {
   background-color: #f8fafc;
   color: #0f172a;
 }
+
+/* Responsive utilities */
+@media (max-width: 768px) {
+  /* Mobile styles */
+  .hide-mobile {
+    display: none !important;
+  }
+}
+
+@media (min-width: 769px) {
+  /* Desktop styles */
+  .hide-desktop {
+    display: none !important;
+  }
+}

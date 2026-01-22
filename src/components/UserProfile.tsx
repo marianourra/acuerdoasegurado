@@ -83,7 +83,7 @@ export default function UserProfile() {
         >
           {getUserInitials()}
         </div>
-        <span>{getUserDisplayName()}</span>
+        <span className="hide-mobile">{getUserDisplayName()}</span>
         <svg
           width="12"
           height="12"

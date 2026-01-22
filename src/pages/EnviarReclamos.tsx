@@ -82,7 +82,7 @@ export default function EnviarReclamos() {
           ← Volver a Mis reclamos
         </Link>
 
-        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700, color: '#0f172a', marginBottom: 32 }}>
+        <h1 style={{ margin: 0, fontSize: 'clamp(24px, 5vw, 28px)', fontWeight: 700, color: '#0f172a', marginBottom: 32 }}>
           Enviar nuevo reclamo
         </h1>
 
@@ -91,7 +91,7 @@ export default function EnviarReclamos() {
             background: 'white',
             border: '1px solid #e2e8f0',
             borderRadius: 16,
-            padding: 32,
+            padding: 'clamp(20px, 4vw, 32px)',
             boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
             marginBottom: 32,
           }}
@@ -108,7 +108,7 @@ export default function EnviarReclamos() {
             Selecciona el tipo de reclamo
           </h2>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12 }}>
             <button
               onClick={() => setSelectedType('autos')}
               style={{
@@ -203,14 +203,14 @@ export default function EnviarReclamos() {
 
         {selectedType && (
           <div
-            style={{
-              background: 'white',
-              border: '1px solid #e2e8f0',
-              borderRadius: 16,
-              padding: 32,
-              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
-              marginBottom: 32,
-            }}
+          style={{
+            background: 'white',
+            border: '1px solid #e2e8f0',
+            borderRadius: 16,
+            padding: 'clamp(20px, 4vw, 32px)',
+            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+            marginBottom: 32,
+          }}
           >
             <h2
               style={{
@@ -268,7 +268,7 @@ export default function EnviarReclamos() {
               </ul>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 24 }}>
               <div>
                 <label
                   style={{

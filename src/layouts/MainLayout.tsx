@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import UserProfile from '../components/UserProfile';
 import Sidebar from '../components/Sidebar';
@@ -9,13 +10,15 @@ type Props = {
 };
 
 function MainLayout({ children }: Props) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
       <header
         style={{
           background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
           color: 'white',
-          padding: '0 24px',
+          padding: '0 16px',
           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
           position: 'sticky',
           top: 0,
@@ -32,7 +35,26 @@ function MainLayout({ children }: Props) {
             height: 70,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              style={{
+                display: 'none',
+                background: 'rgba(255, 255, 255, 0.1)',
+                border: 'none',
+                borderRadius: 8,
+                padding: '8px',
+                cursor: 'pointer',
+                color: 'white',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              className="mobile-menu-button"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 12h18M3 6h18M3 18h18" strokeLinecap="round" />
+              </svg>
+            </button>
             <Link
               to="/dashboard"
               style={{
@@ -59,6 +81,7 @@ function MainLayout({ children }: Props) {
                   fontWeight: 700,
                   letterSpacing: '-0.5px',
                 }}
+                className="hide-mobile"
               >
                 Acuerdo Asegurado
               </span>
@@ -68,10 +91,51 @@ function MainLayout({ children }: Props) {
         </div>
       </header>
 
-      <div style={{ display: 'flex' }}>
-        <Sidebar />
-        <main style={{ flex: 1, padding: '24px', maxWidth: 'calc(100% - 260px)' }}>{children}</main>
+      <div style={{ display: 'flex', position: 'relative' }}>
+        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        {sidebarOpen && (
+          <div
+            onClick={() => setSidebarOpen(false)}
+            style={{
+              position: 'fixed',
+              top: 70,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(0, 0, 0, 0.5)',
+              zIndex: 98,
+            }}
+            className="mobile-overlay"
+          />
+        )}
+        <main
+          style={{
+            flex: 1,
+            padding: '16px',
+            width: '100%',
+            maxWidth: '100%',
+          }}
+          className="main-content"
+        >
+          {children}
+        </main>
       </div>
+
+      <style>{`
+        @media (max-width: 768px) {
+          .mobile-menu-button {
+            display: flex !important;
+          }
+          .main-content {
+            padding: 12px !important;
+          }
+        }
+        @media (min-width: 769px) {
+          .mobile-overlay {
+            display: none !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

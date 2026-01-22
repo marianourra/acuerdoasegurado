@@ -94,22 +94,23 @@ export default function Dashboard() {
     <div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
-          <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700, color: '#0f172a' }}>Mis reclamos</h1>
+          <h1 style={{ margin: 0, fontSize: 'clamp(24px, 5vw, 28px)', fontWeight: 700, color: '#0f172a' }}>Mis reclamos</h1>
           <Link
             to="/claims/new"
             style={{
               textDecoration: 'none',
-              padding: '12px 24px',
+              padding: '12px 20px',
               borderRadius: 12,
               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
               color: 'white',
-              fontSize: 15,
+              fontSize: 14,
               fontWeight: 600,
               display: 'inline-flex',
               alignItems: 'center',
               gap: 8,
               boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)',
               transition: 'all 0.2s ease',
+              whiteSpace: 'nowrap',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-1px)';
@@ -147,11 +148,11 @@ export default function Dashboard() {
             }}
           />
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10 }}>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              style={{ width: '100%', padding: 12, borderRadius: 10, border: '1px solid #ddd' }}
+              style={{ width: '100%', padding: 12, borderRadius: 10, border: '1px solid #ddd', fontSize: 14 }}
             >
               <option value="all">Todos los estados</option>
               {statusOptions.map((s) => (
@@ -164,7 +165,7 @@ export default function Dashboard() {
             <select
               value={companyFilter}
               onChange={(e) => setCompanyFilter(e.target.value)}
-              style={{ width: '100%', padding: 12, borderRadius: 10, border: '1px solid #ddd' }}
+              style={{ width: '100%', padding: 12, borderRadius: 10, border: '1px solid #ddd', fontSize: 14 }}
             >
               <option value="all">Todas las compañías</option>
               {companyOptions.map((c) => (
@@ -197,9 +198,9 @@ export default function Dashboard() {
               }}
             >
               {/* Header card */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <div style={{ fontWeight: 800, fontSize: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1, minWidth: 200 }}>
+                  <div style={{ fontWeight: 800, fontSize: 'clamp(14px, 4vw, 16px)', wordBreak: 'break-word' }}>
                     Reclamo #{claim.claim_number} — {claim.client_name}
                   </div>
 
@@ -250,7 +251,7 @@ export default function Dashboard() {
                 {claim.description}
               </div>
 
-              <div style={{ marginTop: 10, display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+              <div style={{ marginTop: 10, display: 'flex', gap: 14, flexWrap: 'wrap', flexDirection: 'column' }}>
                 <div style={{ fontSize: 13, color: '#444' }}>
                   <strong>Monto reclamado:</strong> ${Number(claim.amount_claimed || 0).toLocaleString()}
                 </div>

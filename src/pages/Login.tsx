@@ -77,7 +77,7 @@ export default function Login() {
           background: 'white',
           borderRadius: 24,
           boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
-          padding: 48,
+          padding: 'clamp(32px, 6vw, 48px)',
         }}
       >
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
@@ -96,7 +96,7 @@ export default function Login() {
           </div>
           <h1
             style={{
-              fontSize: 36,
+              fontSize: 'clamp(28px, 6vw, 36px)',
               fontWeight: 800,
               letterSpacing: '-0.6px',
               marginBottom: 4,
@@ -105,6 +105,7 @@ export default function Login() {
               alignItems: 'center',
               justifyContent: 'center',
               gap: 2,
+              flexWrap: 'wrap',
             }}
           >
             <span
