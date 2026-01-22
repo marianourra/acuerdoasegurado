@@ -288,6 +288,25 @@ export default function Login() {
             {loading ? 'Ingresando...' : 'Ingresar'}
           </button>
         </form>
+
+        <div
+          style={{
+            marginTop: 32,
+            paddingTop: 24,
+            borderTop: '1px solid #e2e8f0',
+            textAlign: 'center',
+          }}
+        >
+          <p
+            style={{
+              fontSize: 12,
+              color: '#94a3b8',
+              margin: 0,
+            }}
+          >
+            © 2026 Acuerdo Asegurado. Todos los derechos reservados.
+          </p>
+        </div>
       </div>
     </div>
   );
