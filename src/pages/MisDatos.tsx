@@ -111,6 +111,12 @@ export default function MisDatos() {
     }
 
     try {
+      if (!user) {
+        setError('No se pudo identificar al usuario. Por favor, recargue la página.');
+        setSaving(false);
+        return;
+      }
+
       console.log('Actualizando con:', updates);
       const { data, error: updateError } = await updateProducerData(producerData.id, updates, user.id);
 

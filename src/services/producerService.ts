@@ -14,8 +14,8 @@ export async function updateProducerData(producerId: number, updates: { email?: 
   // Preparar los updates, asegurándose de que null se envíe correctamente para CBU y phone
   const cleanUpdates: { email?: string; phone?: string | null; cbu?: string | null } = {};
   
-  if (updates.email !== undefined) {
-    cleanUpdates.email = updates.email || null;
+  if (updates.email !== undefined && updates.email) {
+    cleanUpdates.email = updates.email;
   }
   
   if (updates.phone !== undefined) {
