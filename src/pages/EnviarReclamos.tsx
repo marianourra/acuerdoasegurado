@@ -6,34 +6,32 @@ type ClaimType = 'autos' | 'lesiones' | 'otra-propiedad' | null;
 
 const documentationLists = {
   autos: [
-    'Fotos del vehículo dañado (vista general y detalles)',
-    'Fotos de los daños específicos',
-    'Denuncia policial (si aplica)',
+    'Fotos ambos lados cédula de identificación del vehículo',
+    'Foto ambos lados registro de conducir',
+    'Foto DNI ambos lados del titular del rodado (en caso de persona jurídica, copia del estatuto y acta de designación de autoridades)',
     'Presupuesto de reparación',
-    'Registro del vehículo',
-    'Cédula verde/azul',
-    'Licencia de conducir',
-    'Póliza de seguro vigente',
+    'Fotos de los daños del vehículo, incluida alguna donde se vea la patente',
+    'Constancia de cobertura',
+    'Denuncia de siniestro',
   ],
   lesiones: [
-    'Certificado médico con diagnóstico',
-    'Historia clínica completa',
-    'Facturas médicas y de medicamentos',
-    'Comprobantes de gastos de rehabilitación',
-    'Fotos de las lesiones (si aplica)',
+    'Fotos ambos lados cédula de identificación de tu vehículo',
+    'Foto ambos lados registro de conducir',
+    'Foto DNI ambos lados',
+    'Presupuesto de reparación',
+    'Fotos de los daños del vehículo, incluida alguna donde se vea la patente',
+    'Constancia de cobertura',
+    'Denuncia de siniestro',
     'Denuncia policial (si aplica)',
-    'Informes periciales',
-    'Comprobantes de pérdida de ingresos',
+    'Certificados médicos o copia de historia clínica',
+    'Tickets o facturas de gastos médicos',
+    'Recibo de sueldo',
   ],
   'otra-propiedad': [
-    'Fotos de la propiedad dañada',
-    'Fotos de los daños específicos',
-    'Presupuesto de reparación o reposición',
-    'Facturas de reparaciones realizadas',
-    'Denuncia policial (si aplica)',
-    'Documentación de propiedad',
-    'Informes periciales',
-    'Comprobantes de gastos adicionales',
+    'Título o documentación de la propiedad',
+    'Foto ambos lados DNI del titular de la propiedad dañada',
+    'Presupuesto o factura de reparación del daño',
+    'Fotos de los daños',
   ],
 };
 
@@ -46,7 +44,7 @@ export default function EnviarReclamos() {
     if (!selectedType) return;
 
     const typeLabels = {
-      autos: 'Daños a autos',
+      autos: 'Daños a automotor',
       lesiones: 'Lesiones',
       'otra-propiedad': 'Daños a otra propiedad',
     };
