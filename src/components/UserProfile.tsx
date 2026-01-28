@@ -7,6 +7,7 @@ export default function UserProfile() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
+  const [producerName, setProducerName] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -25,12 +26,33 @@ export default function UserProfile() {
     };
   }, [isOpen]);
 
+  useEffect(() => {
+    async function loadProducerName() {
+      if (!user?.id) return;
+
+      const { data, error } = await supabase
+        .from('producers')
+        .select('name')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!error && data) {
+        setProducerName(data.name);
+      }
+    }
+
+    loadProducerName();
+  }, [user]);
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate('/login');
   };
 
   const getUserInitials = () => {
+    if (producerName) {
+      return producerName.charAt(0).toUpperCase();
+    }
     if (!user?.email) return 'U';
     const email = user.email;
     const name = email.split('@')[0];
@@ -38,6 +60,9 @@ export default function UserProfile() {
   };
 
   const getUserDisplayName = () => {
+    if (producerName) {
+      return producerName;
+    }
     if (!user?.email) return 'Usuario';
     return user.email.split('@')[0];
   };
@@ -130,9 +155,35 @@ export default function UserProfile() {
               Usuario
             </div>
             <div style={{ fontSize: 14, fontWeight: 500, color: '#0f172a' }}>
-              {user?.email || 'Usuario'}
+              {producerName || user?.email || 'Usuario'}
             </div>
           </div>
+          <button
+            onClick={() => {
+              setIsOpen(false);
+              navigate('/profile');
+            }}
+            style={{
+              width: '100%',
+              padding: '12px 16px',
+              border: 'none',
+              background: 'transparent',
+              color: '#334155',
+              fontSize: 14,
+              fontWeight: 500,
+              cursor: 'pointer',
+              textAlign: 'left',
+              transition: 'background 0.2s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#f8fafc';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent';
+            }}
+          >
+            Mis datos
+          </button>
           <button
             onClick={handleLogout}
             style={{

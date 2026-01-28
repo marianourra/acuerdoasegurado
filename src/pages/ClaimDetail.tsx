@@ -118,40 +118,86 @@ export default function ClaimDetail() {
 
         <div style={{ display: 'grid', gap: 10 }}>
           <div>
-            <strong>Descripción</strong>
+            <strong>Observaciones</strong>
             <div style={{ marginTop: 4 }}>{claim.description}</div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+          {/* Bloque destacado: Montos */}
+          <div
+            style={{
+              marginTop: 24,
+              padding: 20,
+              borderRadius: 12,
+              background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)',
+              border: '1px solid #7dd3fc',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+              gap: 24,
+            }}
+          >
             <div>
-              <strong>Monto reclamado</strong>
-              <div style={{ marginTop: 4 }}>
-                ${Number(claim.amount_claimed || 0).toLocaleString()}
+              <div style={{ fontSize: 12, color: '#0369a1', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Monto acuerdo
               </div>
-            </div>
-
-            <div>
-              <strong>Monto acuerdo</strong>
-              <div style={{ marginTop: 4 }}>
+              <div style={{ marginTop: 6, fontSize: 22, fontWeight: 700, color: '#0c4a6e' }}>
                 {claim.amount_agreed == null
                   ? '—'
                   : `$${Number(claim.amount_agreed).toLocaleString()}`}
               </div>
             </div>
-
             <div>
-              <strong>Profit productor</strong>
-              <div style={{ marginTop: 4 }}>
+              <div style={{ fontSize: 12, color: '#0369a1', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Beneficio productor
+              </div>
+              <div style={{ marginTop: 6, fontSize: 22, fontWeight: 700, color: '#0c4a6e' }}>
                 {claim.producer_profit == null
                   ? '—'
                   : `$${Number(claim.producer_profit).toLocaleString()}`}
               </div>
             </div>
+          </div>
 
-            <div>
-              <strong>Última actualización</strong>
-              <div style={{ marginTop: 4 }}>
-                {new Date(claim.updated_at || claim.created_at).toLocaleString()}
+          {/* Fechas */}
+          <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid #e5e7eb' }}>
+            <div style={{ fontSize: 12, color: '#6b7280', fontWeight: 600, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Fechas
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
+              <div>
+                <strong style={{ fontSize: 13, color: '#374151' }}>Fecha de inicio</strong>
+                <div style={{ marginTop: 4, fontSize: 14, color: '#4b5563' }}>
+                  {claim.created_at
+                    ? new Date(claim.created_at).toLocaleDateString('es-AR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                      })
+                    : '—'}
+                </div>
+              </div>
+              <div>
+                <strong style={{ fontSize: 13, color: '#374151' }}>Última actualización</strong>
+                <div style={{ marginTop: 4, fontSize: 14, color: '#4b5563' }}>
+                  {claim.updated_at
+                    ? new Date(claim.updated_at).toLocaleDateString('es-AR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                      })
+                    : '—'}
+                </div>
+              </div>
+              <div>
+                <strong style={{ fontSize: 13, color: '#374151' }}>Fecha de finalización</strong>
+                <div style={{ marginTop: 4, fontSize: 14, color: '#4b5563' }}>
+                  {claim.finished_at
+                    ? new Date(claim.finished_at).toLocaleDateString('es-AR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                      })
+                    : '—'}
+                </div>
               </div>
             </div>
           </div>

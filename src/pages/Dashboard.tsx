@@ -197,14 +197,12 @@ export default function Dashboard() {
                 background: '#fff',
               }}
             >
-              {/* Header card */}
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1, minWidth: 200 }}>
                   <div style={{ fontWeight: 800, fontSize: 'clamp(14px, 4vw, 16px)', wordBreak: 'break-word' }}>
-                    Reclamo #{claim.claim_number} — {claim.client_name}
+                    Reclamante: {claim.client_name}
                   </div>
 
-                  {/* Compañía */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     {claim.companies?.logo_url ? (
                       <img
@@ -222,14 +220,35 @@ export default function Dashboard() {
                         }}
                       />
                     )}
-
                     <span style={{ fontSize: 13, color: '#444' }}>
                       {claim.companies?.name || 'Compañía'}
                     </span>
                   </div>
+
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, fontSize: 12, color: '#777', marginTop: 4 }}>
+                    {claim.created_at && (
+                      <span>
+                        <strong>Fecha de inicio:</strong>{' '}
+                        {new Date(claim.created_at).toLocaleDateString('es-AR', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                        })}
+                      </span>
+                    )}
+                    {claim.updated_at && (
+                      <span>
+                        <strong>Última actualización:</strong>{' '}
+                        {new Date(claim.updated_at).toLocaleDateString('es-AR', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                        })}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
-                {/* Badge estado */}
                 <span
                   style={{
                     padding: '6px 10px',
@@ -244,33 +263,6 @@ export default function Dashboard() {
                 >
                   {claim.claim_statuses?.name || 'Sin estado'}
                 </span>
-              </div>
-
-              {/* Body */}
-              <div style={{ marginTop: 10, fontSize: 14, color: '#333' }}>
-                {claim.description}
-              </div>
-
-              <div style={{ marginTop: 10, display: 'flex', gap: 14, flexWrap: 'wrap', flexDirection: 'column' }}>
-                <div style={{ fontSize: 13, color: '#444' }}>
-                  <strong>Monto reclamado:</strong> ${Number(claim.amount_claimed || 0).toLocaleString()}
-                </div>
-
-                {claim.amount_agreed != null && (
-                  <div style={{ fontSize: 13, color: '#444' }}>
-                    <strong>Acuerdo:</strong> ${Number(claim.amount_agreed).toLocaleString()}
-                  </div>
-                )}
-
-                {claim.producer_profit != null && (
-                  <div style={{ fontSize: 13, color: '#444' }}>
-                    <strong>Profit:</strong> ${Number(claim.producer_profit).toLocaleString()}
-                  </div>
-                )}
-              </div>
-
-              <div style={{ marginTop: 10, fontSize: 12, color: '#777' }}>
-                Actualizado: {new Date(claim.updated_at || claim.created_at).toLocaleDateString()}
               </div>
             </div>
           </Link>

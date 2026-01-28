@@ -14,6 +14,7 @@ export async function getMyClaims(userId: string) {
       producer_profit,
       created_at,
       updated_at,
+      finished_at,
       claim_statuses!inner (
         id,
         name,
@@ -48,6 +49,7 @@ export async function getMyClaimById(userId: string, claimId: number) {
       producer_profit,
       created_at,
       updated_at,
+      finished_at,
       claim_statuses!inner (
         id,
         name,
@@ -81,7 +83,6 @@ export async function getMyBenefits(userId: string) {
       amount_agreed,
       created_at,
       updated_at,
-      transfer_date,
       companies (
         id,
         name

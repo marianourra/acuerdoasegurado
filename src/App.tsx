@@ -7,6 +7,7 @@ import ClaimDetail from './pages/ClaimDetail.tsx';
 import MisBeneficios from './pages/MisBeneficios';
 import MisPagos from './pages/MisPagos';
 import EnviarReclamos from './pages/EnviarReclamos';
+import MisDatos from './pages/MisDatos';
 
 export default function App() {
   return (
@@ -55,6 +56,15 @@ export default function App() {
         element={
           <ProtectedRoute>
             <ClaimDetail />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <MisDatos />
           </ProtectedRoute>
         }
       />
