@@ -6,7 +6,6 @@ import ProtectedRoute from './components/ProtectedRoute';
 import ClaimDetail from './pages/ClaimDetail.tsx';
 import MisBeneficios from './pages/MisBeneficios';
 import MisPagos from './pages/MisPagos';
-import EnviarReclamos from './pages/EnviarReclamos';
 import NewClaim from './pages/NewClaim';
 import MisDatos from './pages/MisDatos';
 
