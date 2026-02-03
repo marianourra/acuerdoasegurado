@@ -7,6 +7,7 @@ import ClaimDetail from './pages/ClaimDetail.tsx';
 import MisBeneficios from './pages/MisBeneficios';
 import MisPagos from './pages/MisPagos';
 import EnviarReclamos from './pages/EnviarReclamos';
+import NewClaim from './pages/NewClaim';
 import MisDatos from './pages/MisDatos';
 
 export default function App() {
@@ -46,7 +47,7 @@ export default function App() {
         path="/claims/new"
         element={
           <ProtectedRoute>
-            <EnviarReclamos />
+            <NewClaim />
           </ProtectedRoute>
         }
       />

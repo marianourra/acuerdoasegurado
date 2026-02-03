@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getMyClaims } from '../services/claimsService';
+import { claimTypeLabels } from '../constants/claimTypes';
+import type { ClaimTypeLetter } from '../services/claimsService';
 import { Link } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
 
@@ -202,6 +204,11 @@ export default function Dashboard() {
                   <div style={{ fontWeight: 800, fontSize: 'clamp(14px, 4vw, 16px)', wordBreak: 'break-word' }}>
                     Reclamante: {claim.client_name}
                   </div>
+                  {claim.type && claimTypeLabels[claim.type as ClaimTypeLetter] && (
+                    <div style={{ fontSize: 13, color: '#667eea', fontWeight: 600 }}>
+                      {claimTypeLabels[claim.type as ClaimTypeLetter]}
+                    </div>
+                  )}
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     {claim.companies?.logo_url ? (
