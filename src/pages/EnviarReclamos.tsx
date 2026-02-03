@@ -89,7 +89,7 @@ export default function EnviarReclamos() {
     const typeLabels = {
       autos: 'Daños a automotor',
       lesiones: 'Lesiones',
-      'otra-propiedad': 'Daños a otra propiedad',
+      'otra-propiedad': 'Daños a otras propiedades  ',
     };
 
     let message = `Hola, quiero enviar un nuevo reclamo.\n\nTipo de reclamo: ${typeLabels[selectedType]}\n\n`;
