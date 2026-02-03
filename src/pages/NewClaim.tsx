@@ -417,7 +417,7 @@ export default function NewClaim() {
                       marginBottom: 8,
                     }}
                   >
-                    Compañía
+                    Compañía a reclamar
                   </label>
                   <select
                     id="company_id"
