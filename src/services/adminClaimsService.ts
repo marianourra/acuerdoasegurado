@@ -55,7 +55,8 @@ export async function getAdminClaims(): Promise<{
     .order('updated_at', { ascending: false });
 
   if (error) return { data: null, error: { message: error.message } };
-  return { data: (data as unknown) as AdminClaimRow[] ?? [], error: null };
+  const raw: unknown = data;
+  return { data: (raw as AdminClaimRow[]) ?? [], error: null };
 }
 
 export type ClaimPatch = {
