@@ -32,7 +32,7 @@ export async function getAdminTransfers(): Promise<{
     .order('transfer_date', { ascending: false });
 
   if (error) return { data: null, error: { message: error.message } };
-  return { data: (data as AdminTransferRow[]) ?? [], error: null };
+  return { data: (data as unknown) as AdminTransferRow[] ?? [], error: null };
 }
 
 export type CreateTransferParams = {

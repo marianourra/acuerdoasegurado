@@ -4,12 +4,7 @@ import MainLayout from '../layouts/MainLayout';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { isCurrentUserAdmin } from '../services/adminService';
 import { getAdminProducers } from '../services/adminProducersService';
-import {
-  getAdminTransfers,
-  createTransfer,
-  type AdminTransferRow,
-  type CreateTransferParams,
-} from '../services/transfersService';
+import { getAdminTransfers, createTransfer, type AdminTransferRow } from '../services/transfersService';
 import AdminNav from '../components/AdminNav';
 import { formatDateLocal, getTodayLocalYYYYMMDD } from '../utils/dateUtils';
 
