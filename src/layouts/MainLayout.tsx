@@ -114,10 +114,13 @@ function MainLayout({ children }: Props) {
             padding: '16px',
             width: '100%',
             maxWidth: '100%',
+            minWidth: 0,
           }}
           className="main-content"
         >
-          {children}
+          <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+            {children}
+          </div>
         </main>
       </div>
 

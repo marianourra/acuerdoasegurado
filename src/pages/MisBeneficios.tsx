@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { getMyBenefits, getMyClaims } from '../services/claimsService';
 import { getProducerTransfers } from '../services/transfersService';
 import MainLayout from '../layouts/MainLayout';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function MisBeneficios() {
   const { user, loading: authLoading } = useAuth();
@@ -93,9 +94,9 @@ export default function MisBeneficios() {
     return Math.max(...topBenefits.map(b => b.amount), 1);
   }, [topBenefits]);
 
-  if (authLoading) return <MainLayout><p style={{ padding: 16 }}>Cargando sesión...</p></MainLayout>;
+  if (authLoading) return <MainLayout><LoadingSpinner text="Cargando sesión..." /></MainLayout>;
   if (!user) return null;
-  if (loading) return <MainLayout><p style={{ padding: 16 }}>Cargando beneficios...</p></MainLayout>;
+  if (loading) return <MainLayout><LoadingSpinner text="Cargando beneficios..." /></MainLayout>;
 
   return (
     <MainLayout>

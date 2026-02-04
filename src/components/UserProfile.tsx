@@ -4,10 +4,9 @@ import { useAuth } from '../context/AuthContext';
 import { supabase } from '../services/supabaseClient';
 
 export default function UserProfile() {
-  const { user } = useAuth();
+  const auth = useAuth();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
-  const [producerName, setProducerName] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -26,46 +25,13 @@ export default function UserProfile() {
     };
   }, [isOpen]);
 
-  useEffect(() => {
-    async function loadProducerName() {
-      if (!user?.id) return;
-
-      const { data, error } = await supabase
-        .from('producers')
-        .select('name')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!error && data) {
-        setProducerName(data.name);
-      }
-    }
-
-    loadProducerName();
-  }, [user]);
-
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate('/login');
   };
 
-  const getUserInitials = () => {
-    if (producerName) {
-      return producerName.charAt(0).toUpperCase();
-    }
-    if (!user?.email) return 'U';
-    const email = user.email;
-    const name = email.split('@')[0];
-    return name.charAt(0).toUpperCase();
-  };
-
-  const getUserDisplayName = () => {
-    if (producerName) {
-      return producerName;
-    }
-    if (!user?.email) return 'Usuario';
-    return user.email.split('@')[0];
-  };
+  const initials = auth.producerName ? auth.producerName.charAt(0).toUpperCase() : 'U';
+  const displayLabel = auth.producerNameLoaded ? (auth.producerName || 'Usuario') : '';
 
   return (
     <div ref={dropdownRef} style={{ position: 'relative' }}>
@@ -106,9 +72,9 @@ export default function UserProfile() {
             fontSize: 14,
           }}
         >
-          {getUserInitials()}
+          {initials}
         </div>
-        <span className="hide-mobile">{getUserDisplayName()}</span>
+        <span className="hide-mobile">{displayLabel}</span>
         <svg
           width="12"
           height="12"
@@ -155,7 +121,7 @@ export default function UserProfile() {
               Usuario
             </div>
             <div style={{ fontSize: 14, fontWeight: 500, color: '#0f172a' }}>
-              {producerName || user?.email || 'Usuario'}
+              {auth.producerNameLoaded ? (auth.producerName ?? 'Usuario') : ''}
             </div>
           </div>
           <button

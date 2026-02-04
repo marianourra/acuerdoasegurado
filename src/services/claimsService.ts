@@ -28,6 +28,28 @@ export async function getDefaultStatusId(): Promise<{ data: string | null; error
   return { data: data.id, error: null };
 }
 
+export type ClaimStatusStep = {
+  id: string;
+  name: string;
+  color: string | null;
+  order_index: number;
+};
+
+export async function getClaimStatusesOrdered(): Promise<{
+  data: ClaimStatusStep[] | null;
+  error: { message: string } | null;
+}> {
+  const { data, error } = await supabase
+    .from('claim_statuses')
+    .select('id, name, color, order_index')
+    .order('order_index', { ascending: true });
+
+  if (error) {
+    return { data: null, error: { message: error.message } };
+  }
+  return { data: (data as ClaimStatusStep[]) ?? [], error: null };
+}
+
 export type ClaimTypeLetter = 'A' | 'L' | 'P';
 
 export type CreateClaimPayload = {

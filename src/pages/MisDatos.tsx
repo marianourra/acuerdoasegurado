@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getProducerData, updateProducerData } from '../services/producerService';
 import MainLayout from '../layouts/MainLayout';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 /** Convierte el valor del CBU a string de dígitos, evitando notación científica cuando viene como número */
 function cbuToDisplay(value: unknown): string {
@@ -196,7 +197,7 @@ export default function MisDatos() {
   if (authLoading || loading) {
     return (
       <MainLayout>
-        <p style={{ padding: 16 }}>Cargando datos...</p>
+        <LoadingSpinner text="Cargando datos..." />
       </MainLayout>
     );
   }

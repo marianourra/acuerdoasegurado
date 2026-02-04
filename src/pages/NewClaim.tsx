@@ -5,6 +5,7 @@ import { getCompanies } from '../services/companiesService';
 import { getMyProducerId, getDefaultStatusId, createClaim } from '../services/claimsService';
 import { documentationLists, claimTypeKeyToLetter, type ClaimTypeKey } from '../constants/claimTypes';
 import MainLayout from '../layouts/MainLayout';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 type ClaimType = ClaimTypeKey | null;
 
@@ -300,7 +301,7 @@ export default function NewClaim() {
           <>
 
             {companiesLoading ? (
-              <p style={{ padding: 24, color: '#64748b', fontSize: 15 }}>Cargando compañías…</p>
+              <LoadingSpinner text="Cargando compañías…" size={48} inline />
             ) : (
               <form
                 onSubmit={handleSubmit}

@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import MainLayout from '../layouts/MainLayout';
 import { useAuth } from '../context/AuthContext';
 import { getProducerTransfers } from '../services/transfersService';
+import { formatDateLocal } from '../utils/dateUtils';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 type Transfer = {
   id: number;
@@ -43,14 +45,6 @@ export default function Transfers() {
     loadTransfers();
   }, [user]);
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-AR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
-  };
-
   const formatAmount = (amount: number, currency: string) => {
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',
@@ -63,7 +57,7 @@ export default function Transfers() {
   if (authLoading) {
     return (
       <MainLayout>
-        <p style={{ padding: 16 }}>Cargando sesión...</p>
+        <LoadingSpinner text="Cargando sesión..." />
       </MainLayout>
     );
   }
@@ -77,7 +71,7 @@ export default function Transfers() {
           <h1 style={{ margin: 0, fontSize: 'clamp(24px, 5vw, 28px)', fontWeight: 700, color: '#0f172a', marginBottom: 24 }}>
             Mis pagos
           </h1>
-          <p style={{ padding: 16 }}>Cargando transferencias...</p>
+          <LoadingSpinner text="Cargando transferencias..." inline />
         </div>
       </MainLayout>
     );
@@ -164,7 +158,7 @@ export default function Transfers() {
                     <div>
                       <div style={{ fontSize: 14, color: '#64748b', marginBottom: 4 }}>Fecha</div>
                       <div style={{ fontSize: 16, fontWeight: 600, color: '#0f172a' }}>
-                        {formatDate(transfer.transfer_date)}
+                        {formatDateLocal(transfer.transfer_date)}
                       </div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
@@ -284,7 +278,7 @@ export default function Transfers() {
                           color: '#0f172a',
                         }}
                       >
-                        {formatDate(transfer.transfer_date)}
+                        {formatDateLocal(transfer.transfer_date)}
                       </td>
                       <td
                         style={{

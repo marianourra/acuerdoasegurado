@@ -8,6 +8,10 @@ import MisBeneficios from './pages/MisBeneficios';
 import MisPagos from './pages/MisPagos';
 import NewClaim from './pages/NewClaim';
 import MisDatos from './pages/MisDatos';
+import AdminClaims from './pages/AdminClaims';
+import AdminProducers from './pages/AdminProducers';
+import AdminCompanies from './pages/AdminCompanies';
+import AdminTransfers from './pages/AdminTransfers';
 
 export default function App() {
   return (
@@ -65,6 +69,39 @@ export default function App() {
         element={
           <ProtectedRoute>
             <MisDatos />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/claims"
+        element={
+          <ProtectedRoute>
+            <AdminClaims />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/producers"
+        element={
+          <ProtectedRoute>
+            <AdminProducers />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/companies"
+        element={
+          <ProtectedRoute>
+            <AdminCompanies />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/transfers"
+        element={
+          <ProtectedRoute>
+            <AdminTransfers />
           </ProtectedRoute>
         }
       />
