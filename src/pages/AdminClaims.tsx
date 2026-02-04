@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -39,6 +39,32 @@ export default function AdminClaims() {
   const [editForm, setEditForm] = useState<ClaimPatch>({});
   const [saveLoading, setSaveLoading] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [companyFilter, setCompanyFilter] = useState<string>('all');
+  const [q, setQ] = useState<string>('');
+
+  const filteredClaims = useMemo(() => {
+    const query = q.trim().toLowerCase();
+    return claims.filter((c) => {
+      if (statusFilter !== 'all' && c.claim_statuses?.id !== statusFilter) return false;
+      if (companyFilter !== 'all' && c.companies?.id !== companyFilter) return false;
+      if (query) {
+        const haystack = [
+          c.client_name,
+          (c as { claim_number?: string }).claim_number,
+          c.description,
+          c.companies?.name,
+          c.claim_statuses?.name,
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        if (!haystack.includes(query)) return false;
+      }
+      return true;
+    });
+  }, [claims, statusFilter, companyFilter, q]);
 
   useEffect(() => {
     let cancelled = false;
@@ -208,11 +234,55 @@ export default function AdminClaims() {
         {loading ? (
           <LoadingSpinner text="Cargando reclamos..." size={48} inline />
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {claims.length === 0 && !error && (
-              <p style={{ color: '#64748b', fontSize: 15 }}>No hay reclamos.</p>
-            )}
-            {claims.map((claim) => (
+          <>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 10, marginBottom: 16 }}>
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Buscar por cliente, nro, compañía..."
+                style={{
+                  width: '100%',
+                  padding: 12,
+                  borderRadius: 10,
+                  border: '1px solid #e2e8f0',
+                  fontSize: 14,
+                }}
+              />
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10 }}>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  style={{ width: '100%', padding: 12, borderRadius: 10, border: '1px solid #e2e8f0', fontSize: 14 }}
+                >
+                  <option value="all">Todos los estados</option>
+                  {statuses.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={companyFilter}
+                  onChange={(e) => setCompanyFilter(e.target.value)}
+                  style={{ width: '100%', padding: 12, borderRadius: 10, border: '1px solid #e2e8f0', fontSize: 14 }}
+                >
+                  <option value="all">Todas las compañías</option>
+                  {companies.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {filteredClaims.length === 0 && !error && (
+                <p style={{ color: '#64748b', fontSize: 15 }}>
+                  {claims.length === 0 ? 'No hay reclamos.' : 'Ningún reclamo coincide con los filtros.'}
+                </p>
+              )}
+              {filteredClaims.map((claim) => (
               <div
                 key={claim.id}
                 style={{
@@ -319,8 +389,7 @@ export default function AdminClaims() {
                 </div>
               </div>
             ))}
-          </div>
-        )}
+            </div>
 
         {/* Modal edición */}
         {editingId != null && (
@@ -563,7 +632,9 @@ export default function AdminClaims() {
             </div>
           </div>
         )}
-      </div>
+          </>
+        )}
+    </div>
     </MainLayout>
   );
 }
