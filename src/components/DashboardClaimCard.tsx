@@ -22,8 +22,8 @@ type DashboardClaimCardProps = {
 function UnreadBadge() {
   return (
     <span
-      title="Hay novedades desde tu última visita"
-      aria-label="Hay novedades desde tu última visita"
+      className="claim-unread-badge"
+      aria-label="Hay novedades"
       style={{
         display: 'inline-flex',
         alignItems: 'center',

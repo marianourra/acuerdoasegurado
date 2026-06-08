@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { claimTypeLabels } from '../constants/claimTypes';
 import type { ClaimTypeLetter } from '../services/claimsService';
 import type { AdminClaimRow } from '../services/adminClaimsService';
-import { formatDate, getAdminClaimFieldSections } from '../utils/adminClaimFormat';
+import { formatDate, formatMoney, getAdminClaimFieldSections } from '../utils/adminClaimFormat';
 import CompanyLogo from './CompanyLogo';
 
 type AdminClaimCardProps = {
@@ -22,6 +22,8 @@ const actionBtnStyle = {
 export default function AdminClaimCard({ claim, onEdit, onDelete }: AdminClaimCardProps) {
   const [expanded, setExpanded] = useState(false);
   const sections = getAdminClaimFieldSections(claim);
+  const hasAgreedAmount = claim.amount_agreed != null && claim.amount_agreed > 0;
+  const hasPaymentDate = Boolean(claim.payment_date);
 
   return (
     <div
@@ -58,6 +60,83 @@ export default function AdminClaimCard({ claim, onEdit, onDelete }: AdminClaimCa
             </div>
           )}
 
+          {hasAgreedAmount && (
+            <div
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 12,
+                alignItems: 'stretch',
+                marginTop: 8,
+                padding: '10px 12px',
+                borderRadius: 10,
+                background: hasPaymentDate
+                  ? 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)'
+                  : 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
+                border: hasPaymentDate ? '1px solid #bbf7d0' : '1px solid #fde68a',
+              }}
+            >
+              <div style={{ flex: '1 1 120px', minWidth: 0 }}>
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: '#16a34a',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.03em',
+                    marginBottom: 4,
+                  }}
+                >
+                  Monto acordado
+                </div>
+                <div
+                  style={{
+                    fontSize: 'clamp(17px, 4vw, 20px)',
+                    fontWeight: 800,
+                    color: '#0f172a',
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {formatMoney(claim.amount_agreed)}
+                </div>
+              </div>
+
+              <div
+                style={{
+                  width: 1,
+                  alignSelf: 'stretch',
+                  background: hasPaymentDate ? '#bbf7d0' : '#fde68a',
+                  flexShrink: 0,
+                }}
+              />
+
+              <div style={{ flex: '1 1 120px', minWidth: 0 }}>
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: hasPaymentDate ? '#0284c7' : '#d97706',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.03em',
+                    marginBottom: 4,
+                  }}
+                >
+                  Fecha de pago
+                </div>
+                <div
+                  style={{
+                    fontSize: 'clamp(15px, 3.5vw, 17px)',
+                    fontWeight: 700,
+                    color: hasPaymentDate ? '#0f172a' : '#92400e',
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {hasPaymentDate ? formatDate(claim.payment_date) : 'Pendiente'}
+                </div>
+              </div>
+            </div>
+          )}
+
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, fontSize: 12, color: '#777', marginTop: 4 }}>
             {claim.created_at && (
               <span>
@@ -77,11 +156,6 @@ export default function AdminClaimCard({ claim, onEdit, onDelete }: AdminClaimCa
                   month: '2-digit',
                   year: 'numeric',
                 })}
-              </span>
-            )}
-            {claim.payment_date && (
-              <span>
-                <strong>Fecha de pago:</strong> {formatDate(claim.payment_date)}
               </span>
             )}
           </div>

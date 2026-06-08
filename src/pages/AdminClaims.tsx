@@ -50,6 +50,7 @@ export default function AdminClaims() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [companyFilter, setCompanyFilter] = useState<string>('all');
   const [producerFilter, setProducerFilter] = useState<string>('all');
+  const [asistenteFilter, setAsistenteFilter] = useState<string>('all');
   const [q, setQ] = useState<string>('');
 
   const filteredClaims = useMemo(() => {
@@ -58,6 +59,11 @@ export default function AdminClaims() {
       if (statusFilter !== 'all' && c.claim_statuses?.id !== statusFilter) return false;
       if (companyFilter !== 'all' && c.companies?.id !== companyFilter) return false;
       if (producerFilter !== 'all' && String(c.producer_id) !== producerFilter) return false;
+      if (asistenteFilter === 'none') {
+        if (c.asistente_id) return false;
+      } else if (asistenteFilter !== 'all' && c.asistente_id !== asistenteFilter) {
+        return false;
+      }
       if (query) {
         const haystack = [
           c.client_name,
@@ -66,6 +72,7 @@ export default function AdminClaims() {
           c.companies?.name,
           c.claim_statuses?.name,
           c.producers?.name,
+          c.asistentes?.nombre,
         ]
           .filter(Boolean)
           .join(' ')
@@ -74,7 +81,7 @@ export default function AdminClaims() {
       }
       return true;
     });
-  }, [claims, statusFilter, companyFilter, producerFilter, q]);
+  }, [claims, statusFilter, companyFilter, producerFilter, asistenteFilter, q]);
 
   const groupedSections = useMemo(() => {
     const enTramite: AdminClaimRow[] = [];
@@ -331,6 +338,19 @@ export default function AdminClaims() {
                   {companies.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={asistenteFilter}
+                  onChange={(e) => setAsistenteFilter(e.target.value)}
+                  style={{ width: '100%', padding: 12, borderRadius: 10, border: '1px solid #e2e8f0', fontSize: 14 }}
+                >
+                  <option value="all">Todos los asistentes</option>
+                  <option value="none">Sin asistente</option>
+                  {asistentes.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.nombre}
                     </option>
                   ))}
                 </select>
