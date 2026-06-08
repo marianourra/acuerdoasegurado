@@ -10,7 +10,8 @@ const producerMenuItems = [
   {
     path: '/dashboard',
     label: 'Mis reclamos',
-    match: (path: string) => path === '/dashboard' || path.startsWith('/claims'),
+    match: (path: string) =>
+      path === '/dashboard' || (path.startsWith('/claims') && !path.startsWith('/statistics')),
     icon: (
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path
@@ -22,6 +23,22 @@ const producerMenuItems = [
         />
         <path
           d="M7 8H13M7 12H13"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    ),
+  },
+  {
+    path: '/statistics',
+    label: 'Estadísticas',
+    match: (path: string) => path === '/statistics',
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M4 16V10M8 16V6M12 16V12M16 16V4"
           stroke="currentColor"
           strokeWidth="2"
           strokeLinecap="round"

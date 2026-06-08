@@ -11,6 +11,7 @@ import ClaimDetail from './pages/ClaimDetail.tsx';
 // import MisPagos from './pages/MisPagos';
 import NewClaim from './pages/NewClaim';
 import MisDatos from './pages/MisDatos';
+import ProducerStatistics from './pages/ProducerStatistics';
 import AdminClaims from './pages/AdminClaims';
 import AdminProducers from './pages/AdminProducers';
 import AdminCompanies from './pages/AdminCompanies';
@@ -71,6 +72,17 @@ export default function App() {
           <ProtectedRoute>
             <ProducerOnlyRoute>
               <ClaimDetail />
+            </ProducerOnlyRoute>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/statistics"
+        element={
+          <ProtectedRoute>
+            <ProducerOnlyRoute>
+              <ProducerStatistics />
             </ProducerOnlyRoute>
           </ProtectedRoute>
         }
