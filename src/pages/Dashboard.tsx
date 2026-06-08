@@ -10,6 +10,7 @@ import { Link, useLocation } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ClaimsStatusCollapse from '../components/ClaimsStatusCollapse';
+import ClearFiltersButton from '../components/ClearFiltersButton';
 import {
   GROUP_EN_TRAMITE,
   GROUP_FINALIZADOS,
@@ -84,6 +85,15 @@ export default function Dashboard() {
       return true;
     });
   }, [claims, statusFilter, companyFilter, q]);
+
+  const hasActiveFilters =
+    statusFilter !== 'all' || companyFilter !== 'all' || q.trim() !== '';
+
+  const clearFilters = () => {
+    setStatusFilter('all');
+    setCompanyFilter('all');
+    setQ('');
+  };
 
   const groupedSections = useMemo(() => {
     const enTramite: any[] = [];
@@ -215,6 +225,10 @@ export default function Dashboard() {
                 </option>
               ))}
             </select>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <ClearFiltersButton onClick={clearFilters} disabled={!hasActiveFilters} />
           </div>
         </div>
 

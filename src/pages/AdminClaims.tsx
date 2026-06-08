@@ -20,6 +20,7 @@ import { getAbogados, type Abogado } from '../services/abogadosService';
 import AdminClaimCard from '../components/AdminClaimCard';
 import AdminClaimEditModal from '../components/AdminClaimEditModal';
 import ClaimsStatusCollapse from '../components/ClaimsStatusCollapse';
+import ClearFiltersButton from '../components/ClearFiltersButton';
 import {
   GROUP_EN_TRAMITE,
   GROUP_FINALIZADOS,
@@ -82,6 +83,21 @@ export default function AdminClaims() {
       return true;
     });
   }, [claims, statusFilter, companyFilter, producerFilter, asistenteFilter, q]);
+
+  const hasActiveFilters =
+    statusFilter !== 'all' ||
+    companyFilter !== 'all' ||
+    producerFilter !== 'all' ||
+    asistenteFilter !== 'all' ||
+    q.trim() !== '';
+
+  const clearFilters = () => {
+    setStatusFilter('all');
+    setCompanyFilter('all');
+    setProducerFilter('all');
+    setAsistenteFilter('all');
+    setQ('');
+  };
 
   const groupedSections = useMemo(() => {
     const enTramite: AdminClaimRow[] = [];
@@ -354,6 +370,10 @@ export default function AdminClaims() {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <ClearFiltersButton onClick={clearFilters} disabled={!hasActiveFilters} />
               </div>
             </div>
 
