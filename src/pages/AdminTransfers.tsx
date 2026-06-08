@@ -5,7 +5,6 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import { isCurrentUserAdmin } from '../services/adminService';
 import { getAdminProducers } from '../services/adminProducersService';
 import { getAdminTransfers, createTransfer, type AdminTransferRow } from '../services/transfersService';
-import AdminNav from '../components/AdminNav';
 import { formatDateLocal, getTodayLocalYYYYMMDD } from '../utils/dateUtils';
 
 const inputStyle = {
@@ -169,7 +168,6 @@ export default function AdminTransfers() {
   return (
     <MainLayout>
       <div style={{ maxWidth: 640, margin: '0 auto' }}>
-        <AdminNav active="transfers" />
         <h1 style={{ margin: '0 0 24px', fontSize: 'clamp(22px, 4vw, 26px)', fontWeight: 700, color: '#0f172a' }}>
           Admin — Transferencias de pagos
         </h1>

@@ -74,3 +74,42 @@ export async function createProducer(params: CreateProducerParams): Promise<{
 
   return { data: row as AdminProducerRow, error: null };
 }
+
+export type UpdateProducerParams = {
+  name: string;
+  email: string;
+  phone?: string | null;
+  cbu?: string | null;
+  is_admin?: boolean;
+};
+
+export function producerToEditForm(producer: AdminProducerRow): UpdateProducerParams {
+  return {
+    name: producer.name ?? '',
+    email: producer.email ?? '',
+    phone: producer.phone,
+    cbu: producer.cbu,
+    is_admin: producer.is_admin ?? false,
+  };
+}
+
+export async function updateAdminProducer(
+  id: number,
+  params: UpdateProducerParams
+): Promise<{ data: AdminProducerRow | null; error: { message: string } | null }> {
+  const { data, error } = await supabase
+    .from('producers')
+    .update({
+      name: params.name.trim(),
+      email: params.email.trim(),
+      phone: params.phone?.trim() || null,
+      cbu: params.cbu?.trim() || null,
+      is_admin: params.is_admin ?? false,
+    })
+    .eq('id', id)
+    .select('id, user_id, name, email, phone, cbu, is_admin')
+    .single();
+
+  if (error) return { data: null, error: { message: error.message } };
+  return { data: data as AdminProducerRow, error: null };
+}

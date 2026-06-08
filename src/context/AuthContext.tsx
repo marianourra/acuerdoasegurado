@@ -8,6 +8,8 @@ type AuthContextType = {
   /** Nombre del productor (tabla producers). Cargado una vez por sesión, no se vuelve a pedir al cambiar de página. */
   producerName: string | null;
   producerNameLoaded: boolean;
+  /** is_admin del productor actual. Se carga junto con producerName. */
+  isAdmin: boolean;
 };
 
 const AuthContext = createContext<AuthContextType>({
@@ -15,6 +17,7 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   producerName: null,
   producerNameLoaded: false,
+  isAdmin: false,
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -22,6 +25,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [producerName, setProducerName] = useState<string | null>(null);
   const [producerNameLoaded, setProducerNameLoaded] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -43,21 +47,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user?.id) {
       setProducerName(null);
       setProducerNameLoaded(false);
+      setIsAdmin(false);
       return;
     }
     supabase
       .from('producers')
-      .select('name')
+      .select('name, is_admin')
       .eq('user_id', user.id)
       .single()
       .then(({ data, error }) => {
         setProducerName(!error && data ? data.name : null);
+        setIsAdmin(!error && data ? data.is_admin === true : false);
         setProducerNameLoaded(true);
       });
   }, [user?.id]);
 
   return (
-    <AuthContext.Provider value={{ user, loading, producerName, producerNameLoaded }}>
+    <AuthContext.Provider value={{ user, loading, producerName, producerNameLoaded, isAdmin }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,62 +1,67 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { getMyClaims } from '../services/claimsService';
-import { isCurrentUserAdmin } from '../services/adminService';
-import { claimTypeLabels } from '../constants/claimTypes';
-import type { ClaimTypeLetter } from '../services/claimsService';
-import { Link } from 'react-router-dom';
+import {
+  getMyClaims,
+  getClaimStatusesOrdered,
+  isFinalizedClaim,
+  type ClaimStatusStep,
+} from '../services/claimsService';
+import { Link, useLocation } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
 import LoadingSpinner from '../components/LoadingSpinner';
+import ClaimsStatusCollapse from '../components/ClaimsStatusCollapse';
+import {
+  GROUP_EN_TRAMITE,
+  GROUP_FINALIZADOS,
+  CLAIM_GROUP_META,
+  DEFAULT_EXPANDED_SECTIONS,
+} from '../constants/claimGroups';
 
 export default function Dashboard() {
   const { user, loading: authLoading } = useAuth();
+  const location = useLocation();
   const [claims, setClaims] = useState<any[]>([]);
+  const [allStatuses, setAllStatuses] = useState<ClaimStatusStep[]>([]);
   const [loading, setLoading] = useState(true);
   const [errMsg, setErrMsg] = useState<string | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(DEFAULT_EXPANDED_SECTIONS);
 
-  // filtros
-  const [statusFilter, setStatusFilter] = useState<string>('all'); // status_id
-  const [companyFilter, setCompanyFilter] = useState<string>('all'); // company_id
-  const [q, setQ] = useState<string>(''); // búsqueda simple
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [companyFilter, setCompanyFilter] = useState<string>('all');
+  const [q, setQ] = useState<string>('');
 
   useEffect(() => {
     if (!user) return;
-  
+
     async function loadClaims() {
-      if (!user) return; // Guard against null user
+      if (!user) return;
       setLoading(true);
       setErrMsg(null);
-  
-      const { data, error } = await getMyClaims(user.id);
-  
-      if (error) {
-        console.error('❌ getMyClaims error:', error);
-        setErrMsg(error.message);
+
+      const [claimsRes, statusesRes] = await Promise.all([
+        getMyClaims(user.id),
+        getClaimStatusesOrdered(),
+      ]);
+
+      if (claimsRes.error) {
+        console.error('❌ getMyClaims error:', claimsRes.error);
+        setErrMsg(claimsRes.error.message);
         setClaims([]);
       } else {
-        setClaims(data || []);
+        setClaims(claimsRes.data || []);
       }
-  
+
+      if (statusesRes.error) {
+        console.error('❌ getClaimStatusesOrdered error:', statusesRes.error);
+      } else {
+        setAllStatuses(statusesRes.data || []);
+      }
+
       setLoading(false);
     }
-  
+
     loadClaims();
-  }, [user]);
-
-  useEffect(() => {
-    if (!user) return;
-    isCurrentUserAdmin().then(setIsAdmin);
-  }, [user]);
-
-  const statusOptions = useMemo(() => {
-    const map = new Map<string, { id: string; name: string; color?: string }>();
-    for (const c of claims) {
-      const s = c.claim_statuses;
-      if (s?.id && !map.has(s.id)) map.set(s.id, s);
-    }
-    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
-  }, [claims]);
+  }, [user, location.pathname]);
 
   const companyOptions = useMemo(() => {
     const map = new Map<string, { id: string; name: string; logo_url?: string }>();
@@ -74,24 +79,51 @@ export default function Dashboard() {
       if (statusFilter !== 'all' && c.claim_statuses?.id !== statusFilter) return false;
       if (companyFilter !== 'all' && c.companies?.id !== companyFilter) return false;
 
-      if (query) {
-        const haystack = [
-          c.client_name,
-          c.claim_number,
-          c.description,
-          c.companies?.name,
-          c.claim_statuses?.name,
-        ]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase();
-
-        if (!haystack.includes(query)) return false;
-      }
+      if (query && !(c.client_name ?? '').toLowerCase().includes(query)) return false;
 
       return true;
     });
   }, [claims, statusFilter, companyFilter, q]);
+
+  const groupedSections = useMemo(() => {
+    const enTramite: any[] = [];
+    const finalizados: any[] = [];
+
+    for (const claim of filteredClaims) {
+      if (isFinalizedClaim(claim)) {
+        finalizados.push(claim);
+      } else {
+        enTramite.push(claim);
+      }
+    }
+
+    const sections: Array<{ id: string; name: string; color: string; claims: any[] }> = [];
+
+    if (enTramite.length > 0) {
+      sections.push({
+        id: GROUP_EN_TRAMITE,
+        ...CLAIM_GROUP_META[GROUP_EN_TRAMITE],
+        claims: enTramite,
+      });
+    }
+
+    if (finalizados.length > 0) {
+      sections.push({
+        id: GROUP_FINALIZADOS,
+        ...CLAIM_GROUP_META[GROUP_FINALIZADOS],
+        claims: finalizados,
+      });
+    }
+
+    return sections;
+  }, [filteredClaims]);
+
+  const toggleSection = (sectionId: string) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [sectionId]: !prev[sectionId],
+    }));
+  };
 
   if (authLoading) return <MainLayout><LoadingSpinner text="Cargando sesión..." /></MainLayout>;
   if (!user) return null;
@@ -104,23 +136,6 @@ export default function Dashboard() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
           <h1 style={{ margin: 0, fontSize: 'clamp(24px, 5vw, 28px)', fontWeight: 700, color: '#0f172a' }}>Mis reclamos</h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-            {isAdmin && (
-              <Link
-                to="/admin/claims"
-                style={{
-                  textDecoration: 'none',
-                  padding: '10px 16px',
-                  borderRadius: 10,
-                  background: '#f1f5f9',
-                  color: '#475569',
-                  fontSize: 14,
-                  fontWeight: 600,
-                  border: '1px solid #e2e8f0',
-                }}
-              >
-                Admin
-              </Link>
-            )}
             <Link
               to="/claims/new"
               style={{
@@ -161,12 +176,11 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Filtros mobile-first */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 10 }}>
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Buscar por cliente, nro, compañía..."
+            placeholder="Buscar por nombre del cliente"
             style={{
               width: '100%',
               padding: 12,
@@ -182,7 +196,7 @@ export default function Dashboard() {
               style={{ width: '100%', padding: 12, borderRadius: 10, border: '1px solid #ddd', fontSize: 14 }}
             >
               <option value="all">Todos los estados</option>
-              {statusOptions.map((s) => (
+              {allStatuses.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name}
                 </option>
@@ -261,107 +275,28 @@ export default function Dashboard() {
               <>
                 <div style={{ fontSize: 40, marginBottom: 12, opacity: 0.5 }}>🔍</div>
                 <p style={{ margin: 0, fontWeight: 500, color: '#475569' }}>Ningún reclamo coincide con los filtros</p>
-                <p style={{ margin: '8px 0 0' }}>Probá cambiando estado, compañía o el texto de búsqueda.</p>
+                <p style={{ margin: '8px 0 0' }}>Probá cambiando estado, compañía o el nombre del cliente.</p>
               </>
             )}
           </div>
         )}
       </div>
 
-      <div style={{ marginTop: 14, display: 'grid', gap: 12 }} className="dashboard-claims-grid">
-        {filteredClaims.map((claim) => (
-          <Link
-            key={claim.id}
-            to={`/claims/${claim.id}`}
-            style={{ textDecoration: 'none', color: 'inherit' }}
-            className="dashboard-claim-card-link"
-          >
-            <div
-              className="dashboard-claim-card"
-              style={{
-                border: '1px solid #e2e8f0',
-                padding: 14,
-                borderRadius: 14,
-                background: '#fff',
-                transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1, minWidth: 200 }}>
-                  <div style={{ fontWeight: 800, fontSize: 'clamp(14px, 4vw, 16px)', wordBreak: 'break-word' }}>
-                    Reclamante: {claim.client_name}
-                  </div>
-                  {claim.type && claimTypeLabels[claim.type as ClaimTypeLetter] && (
-                    <div style={{ fontSize: 13, color: '#667eea', fontWeight: 600 }}>
-                      {claimTypeLabels[claim.type as ClaimTypeLetter]}
-                    </div>
-                  )}
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    {claim.companies?.logo_url ? (
-                      <img
-                        src={claim.companies.logo_url}
-                        alt={claim.companies.name}
-                        style={{ width: 22, height: 22, borderRadius: 6, objectFit: 'cover' }}
-                      />
-                    ) : (
-                      <div
-                        style={{
-                          width: 22,
-                          height: 22,
-                          borderRadius: 6,
-                          background: '#eee',
-                        }}
-                      />
-                    )}
-                    <span style={{ fontSize: 13, color: '#444' }}>
-                      {claim.companies?.name || 'Compañía'}
-                    </span>
-                  </div>
-
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, fontSize: 12, color: '#777', marginTop: 4 }}>
-                    {claim.created_at && (
-                      <span>
-                        <strong>Fecha de inicio:</strong>{' '}
-                        {new Date(claim.created_at).toLocaleDateString('es-AR', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          year: 'numeric',
-                        })}
-                      </span>
-                    )}
-                    {claim.updated_at && (
-                      <span>
-                        <strong>Última actualización:</strong>{' '}
-                        {new Date(claim.updated_at).toLocaleDateString('es-AR', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          year: 'numeric',
-                        })}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <span
-                  style={{
-                    padding: '6px 10px',
-                    borderRadius: 999,
-                    backgroundColor: claim.claim_statuses?.color || '#6B7280',
-                    color: '#fff',
-                    fontSize: 12,
-                    fontWeight: 800,
-                    height: 'fit-content',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {claim.claim_statuses?.name || 'Sin estado'}
-                </span>
-              </div>
-            </div>
-          </Link>
-        ))}
-      </div>
+      {groupedSections.length > 0 && (
+        <div style={{ marginTop: 14, display: 'grid', gap: 12 }}>
+          {groupedSections.map((section) => (
+            <ClaimsStatusCollapse
+              key={section.id}
+              statusId={section.id}
+              statusName={section.name}
+              statusColor={section.color}
+              claims={section.claims}
+              isExpanded={expandedSections[section.id] !== false}
+              onToggle={() => toggleSection(section.id)}
+            />
+          ))}
+        </div>
+      )}
     </div>
     </MainLayout>
   );

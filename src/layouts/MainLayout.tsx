@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import UserProfile from '../components/UserProfile';
 import Sidebar from '../components/Sidebar';
+import { useAdminStatus } from '../hooks/useAdminStatus';
 import logo from '../images/logo.png';
 
 type Props = {
@@ -11,6 +12,10 @@ type Props = {
 
 function MainLayout({ children }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const location = useLocation();
+  const isAdmin = useAdminStatus();
+  const showAdminHome = isAdmin ?? location.pathname.startsWith('/admin');
+  const homePath = showAdminHome ? '/admin/claims' : '/dashboard';
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
@@ -56,7 +61,7 @@ function MainLayout({ children }: Props) {
               </svg>
             </button>
             <Link
-              to="/dashboard"
+              to={homePath}
               style={{
                 textDecoration: 'none',
                 display: 'flex',

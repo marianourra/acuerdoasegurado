@@ -35,6 +35,33 @@ export type ClaimStatusStep = {
   order_index: number;
 };
 
+export const FINALIZED_STATUS_NAMES = ['Acordado', 'Sin responsabilidad', 'Sin acuerdo'] as const;
+
+const ACORDADO_STATUS_ID = 'feb85213-84b6-46cf-8872-faa3a6a1b01d';
+
+export function isFinalizedStatusName(name: string | null | undefined): boolean {
+  if (!name) return false;
+  const normalized = name.trim().toLowerCase();
+  return FINALIZED_STATUS_NAMES.some((statusName) => statusName.toLowerCase() === normalized);
+}
+
+export function isAcordadoClaim(claim: {
+  status_id?: string | null;
+  claim_statuses?: { id?: string; name?: string } | null;
+}): boolean {
+  const statusId = claim.status_id ?? claim.claim_statuses?.id ?? null;
+  if (statusId === ACORDADO_STATUS_ID) return true;
+  return claim.claim_statuses?.name?.trim().toLowerCase() === 'acordado';
+}
+
+export function isFinalizedClaim(claim: {
+  status_id?: string | null;
+  claim_statuses?: { id?: string; name?: string } | null;
+}): boolean {
+  if (isAcordadoClaim(claim)) return true;
+  return isFinalizedStatusName(claim.claim_statuses?.name);
+}
+
 export async function getClaimStatusesOrdered(): Promise<{
   data: ClaimStatusStep[] | null;
   error: { message: string } | null;
@@ -50,7 +77,42 @@ export async function getClaimStatusesOrdered(): Promise<{
   return { data: (data as ClaimStatusStep[]) ?? [], error: null };
 }
 
-export type ClaimTypeLetter = 'A' | 'L' | 'P';
+export type ClaimTypeLetter = 'A' | 'L' | 'P' | 'D';
+
+/** Hay cambios desde la última vez que el productor abrió el reclamo. */
+export function hasClaimUnreadUpdates(claim: {
+  updated_at?: string | null;
+  producer_viewed_at?: string | null;
+  created_at?: string | null;
+}): boolean {
+  if (!claim.updated_at) return false;
+  const updatedMs = new Date(claim.updated_at).getTime();
+  const baselineMs = claim.producer_viewed_at
+    ? new Date(claim.producer_viewed_at).getTime()
+    : claim.created_at
+      ? new Date(claim.created_at).getTime()
+      : 0;
+  return updatedMs - baselineMs > 1000;
+}
+
+export async function markClaimViewedByProducer(
+  userId: string,
+  claimId: number
+): Promise<{ error: { message: string } | null }> {
+  const { data: producerId, error: producerError } = await getMyProducerId(userId);
+  if (producerError || !producerId) {
+    return { error: { message: producerError?.message ?? 'Productor no encontrado.' } };
+  }
+
+  const { error } = await supabase
+    .from('claims')
+    .update({ producer_viewed_at: new Date().toISOString() })
+    .eq('id', claimId)
+    .eq('producer_id', producerId);
+
+  if (error) return { error: { message: error.message } };
+  return { error: null };
+}
 
 export type CreateClaimPayload = {
   producer_id: string;
@@ -58,8 +120,9 @@ export type CreateClaimPayload = {
   status_id: string;
   client_name: string;
   type: ClaimTypeLetter;
-  /** Teléfono del reclamante. No se inserta hasta que exista la columna en `claims` (nombre exacto en Supabase). */
+  /** Teléfono del reclamante. */
   client_phone?: string;
+  asistente_id?: string | null;
 };
 
 export async function createClaim(payload: CreateClaimPayload): Promise<{ data: unknown | null; error: { message: string } | null }> {
@@ -70,8 +133,12 @@ export async function createClaim(payload: CreateClaimPayload): Promise<{ data: 
     client_name: payload.client_name,
     type: payload.type,
   };
-  // Descomentar y usar el nombre de columna correcto cuando lo tengas de Supabase (Table Editor > claims):
-  // if (payload.client_phone != null) row['NOMBRE_COLUMNA'] = payload.client_phone;
+  if (payload.client_phone != null && payload.client_phone.trim() !== '') {
+    row.client_phone = payload.client_phone.trim();
+  }
+  if (payload.asistente_id) {
+    row.asistente_id = payload.asistente_id;
+  }
 
   const { data, error } = await supabase
     .from('claims')
@@ -92,6 +159,8 @@ export async function getMyClaims(userId: string) {
       `
       id,
       client_name,
+      client_phone,
+      asistente_id,
       claim_number,
       type,
       description,
@@ -100,19 +169,25 @@ export async function getMyClaims(userId: string) {
       producer_profit,
       created_at,
       updated_at,
+      producer_viewed_at,
       finished_at,
       claim_statuses!inner (
         id,
         name,
         color
       ),
-      companies (
+      companies!company_id (
         id,
-        name
+        name,
+        logo_url
       ),
       producers!inner (
         user_id,
         name
+      ),
+      asistentes (
+        id,
+        nombre
       )
     `
     )
@@ -129,6 +204,8 @@ export async function getMyClaimById(userId: string, claimId: number) {
       `
       id,
       client_name,
+      client_phone,
+      asistente_id,
       claim_number,
       type,
       description,
@@ -137,6 +214,7 @@ export async function getMyClaimById(userId: string, claimId: number) {
       producer_profit,
       created_at,
       updated_at,
+      producer_viewed_at,
       finished_at,
       payment_date,
       claim_statuses!inner (
@@ -144,13 +222,18 @@ export async function getMyClaimById(userId: string, claimId: number) {
         name,
         color
       ),
-      companies (
+      companies!company_id (
         id,
-        name
+        name,
+        logo_url
       ),
       producers!inner (
         user_id,
         name
+      ),
+      asistentes (
+        id,
+        nombre
       )
     `
     )
@@ -173,9 +256,10 @@ export async function getMyBenefits(userId: string) {
       amount_agreed,
       created_at,
       updated_at,
-      companies (
+      companies!company_id (
         id,
-        name
+        name,
+        logo_url
       ),
       producers!inner (
         user_id

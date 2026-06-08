@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
+import { isCurrentUserAdmin } from '../services/adminService';
 import logo from '../images/logo.png';
 import backImage from '../images/back.png';
 
@@ -55,7 +56,8 @@ export default function Login() {
           setError(error.message);
         }
       } else {
-        navigate('/dashboard');
+        const admin = await isCurrentUserAdmin();
+        navigate(admin ? '/admin/claims' : '/dashboard');
       }
     } catch (err: any) {
       console.error('🚨 EXCEPTION (failed to fetch probable):', err);

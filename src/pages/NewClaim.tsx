@@ -3,7 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getCompanies } from '../services/companiesService';
 import { getMyProducerId, getDefaultStatusId, createClaim } from '../services/claimsService';
-import { documentationLists, claimTypeKeyToLetter, type ClaimTypeKey } from '../constants/claimTypes';
+import { claimTypeKeyToLetter, type ClaimTypeKey } from '../constants/claimTypes';
+import DocumentationSectionsList from '../components/DocumentationSectionsList';
 import MainLayout from '../layouts/MainLayout';
 import LoadingSpinner from '../components/LoadingSpinner';
 
@@ -224,6 +225,24 @@ export default function NewClaim() {
               </button>
               <button
                 type="button"
+                onClick={() => setSelectedType('danos-y-lesiones')}
+                style={{
+                  padding: '20px 24px',
+                  borderRadius: 12,
+                  border: selectedType === 'danos-y-lesiones' ? '2px solid #667eea' : '2px solid #e2e8f0',
+                  background: selectedType === 'danos-y-lesiones' ? '#f0f4ff' : '#fff',
+                  color: selectedType === 'danos-y-lesiones' ? '#667eea' : '#64748b',
+                  fontSize: 16,
+                  fontWeight: selectedType === 'danos-y-lesiones' ? 600 : 500,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  textAlign: 'center',
+                }}
+              >
+                Daños y lesiones
+              </button>
+              <button
+                type="button"
                 onClick={() => setSelectedType('otra-propiedad')}
                 style={{
                   padding: '20px 24px',
@@ -260,33 +279,7 @@ export default function NewClaim() {
             </h2>
             {selectedType ? (
               <div style={{ background: '#f8fafc', borderRadius: 12, padding: 20 }}>
-                <ul
-                  style={{
-                    margin: 0,
-                    paddingLeft: 20,
-                    listStyle: 'none',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 12,
-                  }}
-                >
-                  {documentationLists[claimTypeKeyToLetter[selectedType]].map((doc, index) => (
-                    <li
-                      key={index}
-                      style={{
-                        fontSize: 15,
-                        color: '#334155',
-                        position: 'relative',
-                        paddingLeft: 24,
-                      }}
-                    >
-                      <span style={{ position: 'absolute', left: 0, color: '#667eea', fontWeight: 600 }}>
-                        {index + 1}.
-                      </span>
-                      {doc}
-                    </li>
-                  ))}
-                </ul>
+                <DocumentationSectionsList type={claimTypeKeyToLetter[selectedType]} />
               </div>
             ) : (
               <p style={{ color: '#64748b', fontSize: 15, margin: 0 }}>

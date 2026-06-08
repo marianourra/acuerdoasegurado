@@ -1,17 +1,21 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import Login from './pages/Login';
 import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import ProtectedRoute from './components/ProtectedRoute';
+import ProducerOnlyRoute from './components/ProducerOnlyRoute';
+import HomeRedirect from './components/HomeRedirect';
 import ClaimDetail from './pages/ClaimDetail.tsx';
-import MisBeneficios from './pages/MisBeneficios';
-import MisPagos from './pages/MisPagos';
+// Oculto temporalmente
+// import MisBeneficios from './pages/MisBeneficios';
+// import MisPagos from './pages/MisPagos';
 import NewClaim from './pages/NewClaim';
 import MisDatos from './pages/MisDatos';
 import AdminClaims from './pages/AdminClaims';
 import AdminProducers from './pages/AdminProducers';
 import AdminCompanies from './pages/AdminCompanies';
-import AdminTransfers from './pages/AdminTransfers';
+// Oculto temporalmente
+// import AdminTransfers from './pages/AdminTransfers';
 
 export default function App() {
   return (
@@ -23,11 +27,14 @@ export default function App() {
         path="/dashboard"
         element={
           <ProtectedRoute>
-            <Dashboard />
+            <ProducerOnlyRoute>
+              <Dashboard />
+            </ProducerOnlyRoute>
           </ProtectedRoute>
         }
       />
 
+      {/* Oculto temporalmente
       <Route
         path="/benefits"
         element={
@@ -45,12 +52,15 @@ export default function App() {
           </ProtectedRoute>
         }
       />
+      */}
 
       <Route
         path="/claims/new"
         element={
           <ProtectedRoute>
-            <NewClaim />
+            <ProducerOnlyRoute>
+              <NewClaim />
+            </ProducerOnlyRoute>
           </ProtectedRoute>
         }
       />
@@ -59,7 +69,9 @@ export default function App() {
         path="/claims/:id"
         element={
           <ProtectedRoute>
-            <ClaimDetail />
+            <ProducerOnlyRoute>
+              <ClaimDetail />
+            </ProducerOnlyRoute>
           </ProtectedRoute>
         }
       />
@@ -97,6 +109,7 @@ export default function App() {
           </ProtectedRoute>
         }
       />
+      {/* Oculto temporalmente
       <Route
         path="/admin/transfers"
         element={
@@ -105,9 +118,10 @@ export default function App() {
           </ProtectedRoute>
         }
       />
+      */}
 
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/" element={<ProtectedRoute><HomeRedirect /></ProtectedRoute>} />
+      <Route path="*" element={<ProtectedRoute><HomeRedirect /></ProtectedRoute>} />
     </Routes>
   );
 }

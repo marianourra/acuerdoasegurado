@@ -1,11 +1,18 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getMyClaimById, getClaimStatusesOrdered, type ClaimStatusStep } from '../services/claimsService';
-import { claimTypeLabels, documentationLists, getAttachDocumentationWhatsAppUrl } from '../constants/claimTypes';
+import {
+  getMyClaimById,
+  getClaimStatusesOrdered,
+  markClaimViewedByProducer,
+  type ClaimStatusStep,
+} from '../services/claimsService';
+import { claimTypeLabels, getAttachDocumentationWhatsAppUrl, getWhatsAppUrlForPhone } from '../constants/claimTypes';
+import DocumentationSectionsList from '../components/DocumentationSectionsList';
 import type { ClaimTypeLetter } from '../services/claimsService';
 import MainLayout from '../layouts/MainLayout';
 import LoadingSpinner from '../components/LoadingSpinner';
+import CompanyLogo from '../components/CompanyLogo';
 
 const formatDate = (date: string | null | undefined) =>
   date
@@ -41,6 +48,7 @@ export default function ClaimDetail() {
         setClaim(null);
       } else {
         setClaim(data);
+        markClaimViewedByProducer(userId, claimId).catch(() => {});
       }
       setLoading(false);
     }
@@ -137,6 +145,8 @@ export default function ClaimDetail() {
   const claimType = (claim.type as ClaimTypeLetter | null) ?? null;
   const typeLabel = claimType ? claimTypeLabels[claimType] : null;
   const producerName = claim.producers?.name ?? '';
+  const clientPhone = claim.client_phone?.trim() ?? '';
+  const clientWhatsAppUrl = clientPhone ? getWhatsAppUrlForPhone(clientPhone) : null;
   const isAcordado =
     claim.status_id === 'feb85213-84b6-46cf-8872-faa3a6a1b01d' ||
     claim.claim_statuses?.id === 'feb85213-84b6-46cf-8872-faa3a6a1b01d';
@@ -146,7 +156,7 @@ export default function ClaimDetail() {
     const url = getAttachDocumentationWhatsAppUrl({
       producerName,
       clientName: claim.client_name ?? '',
-      claimType,
+      companyName: claim.companies?.name ?? '',
     });
     window.open(url, '_blank');
   };
@@ -238,6 +248,37 @@ export default function ClaimDetail() {
               >
                 {claim.client_name}
               </h1>
+              <div
+                style={{
+                  marginTop: 8,
+                  fontSize: 14,
+                  color: '#64748b',
+                }}
+              >
+                Teléfono:{' '}
+                {clientWhatsAppUrl ? (
+                  <a
+                    href={clientWhatsAppUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      color: '#25D366',
+                      fontWeight: 600,
+                      textDecoration: 'none',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.textDecoration = 'underline';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.textDecoration = 'none';
+                    }}
+                  >
+                    {clientPhone}
+                  </a>
+                ) : (
+                  '—'
+                )}
+              </div>
               {typeLabel && (
                 <span
                   style={{
@@ -264,29 +305,7 @@ export default function ClaimDetail() {
                   fontSize: 14,
                 }}
               >
-                {claim.companies?.logo_url ? (
-                  <img
-                    src={claim.companies.logo_url}
-                    alt=""
-                    style={{ width: 28, height: 28, borderRadius: 8, objectFit: 'cover' }}
-                  />
-                ) : (
-                  <div
-                    style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: 8,
-                      background: '#e2e8f0',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: 12,
-                      color: '#94a3b8',
-                    }}
-                  >
-                    {claim.companies?.name?.charAt(0) ?? 'C'}
-                  </div>
-                )}
+                <CompanyLogo name={claim.companies?.name} logoUrl={claim.companies?.logo_url} />
                 <span>{claim.companies?.name || 'Compañía'}</span>
               </div>
             </div>
@@ -540,14 +559,7 @@ export default function ClaimDetail() {
                     <div style={{ fontSize: 12, fontWeight: 700, color: '#64748b', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 12 }}>
                       Documentación necesaria
                     </div>
-                    <ul style={{ margin: 0, paddingLeft: 20, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      {documentationLists[claimType].map((item, i) => (
-                        <li key={i} style={{ fontSize: 14, color: '#334155', lineHeight: 1.4, position: 'relative' }}>
-                          <span style={{ position: 'absolute', left: -16, color: '#667eea', fontWeight: 600 }}>{i + 1}.</span>
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
+                    <DocumentationSectionsList type={claimType} compact />
                   </div>
                 )}
               </div>
@@ -601,28 +613,26 @@ export default function ClaimDetail() {
                 >
                   Montos
                 </h3>
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                    gap: 16,
-                  }}
-                >
+                <div style={{ display: 'flex', flexWrap: 'wrap' }}>
                   <div
                     style={{
-                      padding: 20,
+                      padding: '16px 20px',
                       borderRadius: 16,
                       background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)',
                       border: '1px solid #bae6fd',
+                      width: 'fit-content',
+                      maxWidth: '100%',
+                      minWidth: 160,
                     }}
                   >
                     <div style={{ fontSize: 12, fontWeight: 600, color: '#0369a1', marginBottom: 6 }}>
                       Monto acuerdo
                     </div>
-                    <div style={{ fontSize: 24, fontWeight: 800, color: '#0c4a6e' }}>
-                      {claim.amount_agreed == null ? '—' : `$${Number(claim.amount_agreed).toLocaleString()}`}
+                    <div style={{ fontSize: 24, fontWeight: 800, color: '#0c4a6e', whiteSpace: 'nowrap' }}>
+                      {claim.amount_agreed == null ? '—' : `$${Number(claim.amount_agreed).toLocaleString('es-AR')}`}
                     </div>
                   </div>
+                  {/* Oculto temporalmente
                   <div
                     style={{
                       padding: 20,
@@ -638,6 +648,7 @@ export default function ClaimDetail() {
                       {claim.producer_profit == null ? '—' : `$${Number(claim.producer_profit).toLocaleString()}`}
                     </div>
                   </div>
+                  */}
                 </div>
               </section>
             )}

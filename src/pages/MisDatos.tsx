@@ -5,18 +5,6 @@ import { getProducerData, updateProducerData } from '../services/producerService
 import MainLayout from '../layouts/MainLayout';
 import LoadingSpinner from '../components/LoadingSpinner';
 
-/** Convierte el valor del CBU a string de dígitos, evitando notación científica cuando viene como número */
-function cbuToDisplay(value: unknown): string {
-  if (value == null || value === '') return '';
-  if (typeof value === 'string') return value.replace(/\D/g, '');
-  if (typeof value === 'number') {
-    if (!Number.isFinite(value)) return '';
-    // Evitar notación científica: usar toLocaleString con fullwide para números grandes
-    return value.toLocaleString('fullwide', { useGrouping: false }).replace(/\D/g, '');
-  }
-  return String(value).replace(/\D/g, '');
-}
-
 export default function MisDatos() {
   const { user, loading: authLoading } = useAuth();
   const [producerData, setProducerData] = useState<any>(null);
@@ -28,18 +16,16 @@ export default function MisDatos() {
   const [formData, setFormData] = useState({
     email: '',
     phone: '',
-    cbu: '',
   });
 
   const [validationErrors, setValidationErrors] = useState<{
     email?: string;
     phone?: string;
-    cbu?: string;
   }>({});
 
   const loadData = useCallback(async () => {
     if (!user) return;
-    
+
     setLoading(true);
     setError(null);
 
@@ -57,7 +43,6 @@ export default function MisDatos() {
       setFormData({
         email: data.email || '',
         phone: data.phone != null ? String(data.phone) : '',
-        cbu: cbuToDisplay(data.cbu),
       });
     }
 
@@ -77,33 +62,12 @@ export default function MisDatos() {
     setSuccess(false);
     setValidationErrors({});
 
-    // Validar CBU si tiene valor - asegurar que sea string
-    const cbuValue = formData.cbu != null ? String(formData.cbu) : '';
-    const cbuTrimmed = cbuValue.trim();
-    if (cbuTrimmed && !validateCBU(cbuTrimmed)) {
-      setValidationErrors({ cbu: 'El CBU debe tener exactamente 22 dígitos' });
-      setSaving(false);
-      return;
-    }
+    const updates: { email?: string; phone?: string | null } = {};
 
-    const updates: { email?: string; phone?: string | null; cbu?: string } = {};
-
-    // Actualizar teléfono si cambió
     const phoneTrimmed = (formData.phone != null ? String(formData.phone) : '').trim();
     const currentPhone = (producerData.phone != null ? String(producerData.phone) : '').trim();
     if (phoneTrimmed !== currentPhone) {
       updates.phone = phoneTrimmed === '' ? null : phoneTrimmed;
-    }
-
-    // Solo actualizar CBU si tiene 22 dígitos o si se está borrando (vacío)
-    const currentCbu = cbuToDisplay(producerData.cbu);
-    if (cbuTrimmed !== currentCbu) {
-      if (cbuTrimmed === '') {
-        // Permitir borrar el CBU
-        updates.cbu = null as any;
-      } else if (validateCBU(cbuTrimmed)) {
-        updates.cbu = cbuTrimmed;
-      }
     }
 
     if (Object.keys(updates).length === 0) {
@@ -118,7 +82,6 @@ export default function MisDatos() {
         return;
       }
 
-      console.log('Actualizando con:', updates);
       const { data, error: updateError } = await updateProducerData(producerData.id, updates, user.id);
 
       if (updateError) {
@@ -129,17 +92,13 @@ export default function MisDatos() {
       }
 
       if (data) {
-        console.log('Datos actualizados:', data);
-      // Actualizar el estado local
-      setProducerData(data);
-      setFormData({
-        email: data.email || '',
-        phone: data.phone != null ? String(data.phone) : '',
-        cbu: cbuToDisplay(data.cbu),
-      });
+        setProducerData(data);
+        setFormData({
+          email: data.email || '',
+          phone: data.phone != null ? String(data.phone) : '',
+        });
         setSuccess(true);
-        
-        // Recargar los datos desde la base de datos para confirmar
+
         setTimeout(async () => {
           try {
             await loadData();
@@ -161,16 +120,9 @@ export default function MisDatos() {
     }
   };
 
-  const validateCBU = (cbu: string): boolean => {
-    // CBU debe tener exactamente 22 dígitos
-    const digitsOnly = cbu.replace(/\D/g, '');
-    return digitsOnly.length === 22;
-  };
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    
-    // Limpiar errores de validación cuando el usuario empieza a escribir
+
     if (validationErrors[name as keyof typeof validationErrors]) {
       setValidationErrors((prev) => {
         const newErrors = { ...prev };
@@ -179,19 +131,10 @@ export default function MisDatos() {
       });
     }
 
-    // Para CBU, solo permitir números
-    if (name === 'cbu') {
-      const digitsOnly = value.replace(/\D/g, '');
-      setFormData((prev) => ({
-        ...prev,
-        [name]: digitsOnly,
-      }));
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
-    }
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   if (authLoading || loading) {
@@ -332,7 +275,7 @@ export default function MisDatos() {
               </p>
             </div>
 
-            <div style={{ marginBottom: 24 }}>
+            <div style={{ marginBottom: 32 }}>
               <label
                 style={{
                   display: 'block',
@@ -371,54 +314,6 @@ export default function MisDatos() {
               {validationErrors.phone && (
                 <p style={{ fontSize: 12, color: '#dc2626', marginTop: 4, margin: 0 }}>
                   {validationErrors.phone}
-                </p>
-              )}
-            </div>
-
-            <div style={{ marginBottom: 32 }}>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: 14,
-                  fontWeight: 500,
-                  color: '#334155',
-                  marginBottom: 8,
-                }}
-              >
-                CBU
-              </label>
-              <input
-                type="text"
-                name="cbu"
-                value={cbuToDisplay(formData.cbu)}
-                onChange={handleChange}
-                placeholder="Ej: 1234567890123456789012"
-                maxLength={22}
-                style={{
-                  width: '100%',
-                  padding: '14px 16px',
-                  borderRadius: 12,
-                  border: validationErrors.cbu ? '2px solid #dc2626' : '2px solid #e2e8f0',
-                  fontSize: 15,
-                  transition: 'all 0.2s ease',
-                  outline: 'none',
-                }}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = '#667eea';
-                  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = validationErrors.cbu ? '#dc2626' : '#e2e8f0';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
-              />
-              {validationErrors.cbu ? (
-                <p style={{ fontSize: 12, color: '#dc2626', marginTop: 4, margin: 0 }}>
-                  {validationErrors.cbu}
-                </p>
-              ) : (
-                <p style={{ fontSize: 12, color: '#64748b', marginTop: 4, margin: 0 }}>
-                  Clave Bancaria Uniforme (22 dígitos) {formData.cbu && String(formData.cbu).length > 0 && `- ${String(formData.cbu).length}/22`}
                 </p>
               )}
             </div>

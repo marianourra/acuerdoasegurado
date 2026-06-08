@@ -1,12 +1,13 @@
 import type { ClaimTypeLetter } from '../services/claimsService';
 
-export type ClaimTypeKey = 'autos' | 'lesiones' | 'otra-propiedad';
+export type ClaimTypeKey = 'autos' | 'lesiones' | 'otra-propiedad' | 'danos-y-lesiones';
 
-/** Etiquetas para mostrar en UI (A, L, P) */
+/** Etiquetas para mostrar en UI (A, L, P, D) */
 export const claimTypeLabels: Record<ClaimTypeLetter, string> = {
   A: 'Daños a autos',
   L: 'Lesiones',
   P: 'Daños a otra propiedad',
+  D: 'Daños y lesiones',
 };
 
 /** Mapeo desde el valor del formulario (NewClaim) a la letra en BD */
@@ -14,9 +15,10 @@ export const claimTypeKeyToLetter: Record<ClaimTypeKey, ClaimTypeLetter> = {
   autos: 'A',
   lesiones: 'L',
   'otra-propiedad': 'P',
+  'danos-y-lesiones': 'D',
 };
 
-/** Listas de documentación recomendada por tipo (para WhatsApp y listados) */
+/** Listas de documentación recomendada por tipo (para listados) */
 export const documentationLists: Record<ClaimTypeLetter, string[]> = {
   A: [
     'Foto de ambos lados de la cédula de identificación del vehículo',
@@ -43,35 +45,70 @@ export const documentationLists: Record<ClaimTypeLetter, string[]> = {
     'Fotos de los daños',
     'Constancia CBU bancaria del propietario',
   ],
+  D: [],
 };
+
+documentationLists.D = [...documentationLists.A, ...documentationLists.L];
+
+export type DocumentationSection = {
+  title?: string;
+  items: string[];
+};
+
+/** Documentación agrupada por sección (p. ej. daños y lesiones). */
+export function getDocumentationSections(type: ClaimTypeLetter): DocumentationSection[] {
+  if (type === 'D') {
+    return [
+      { title: 'Daños a autos', items: documentationLists.A },
+      { title: 'Lesiones', items: documentationLists.L },
+    ];
+  }
+
+  return [{ items: documentationLists[type] }];
+}
 
 const WHATSAPP_NUMBER = '542235698202';
 
+/** Normaliza un teléfono local y devuelve la URL de WhatsApp Web, o null si no es válido. */
+export function getWhatsAppUrlForPhone(phone: string): string | null {
+  const digits = phone.replace(/\D/g, '');
+  if (!digits) return null;
+
+  let normalized = digits;
+  if (normalized.startsWith('0')) {
+    normalized = `54${normalized.slice(1)}`;
+  } else if (!normalized.startsWith('54') && normalized.length === 10) {
+    normalized = `54${normalized}`;
+  }
+
+  return `https://wa.me/${normalized}`;
+}
+
 /**
- * Arma el mensaje para WhatsApp "Adjuntar documentación" con datos del reclamo y del productor.
+ * Arma el mensaje para WhatsApp "Adjuntar documentación" con datos del reclamo.
  */
 export function buildAttachDocumentationWhatsAppMessage(params: {
   producerName: string;
   clientName: string;
-  claimType: ClaimTypeLetter;
+  companyName: string;
 }): string {
-  const list = documentationLists[params.claimType];
-  const listText = list.map((item, i) => `${i + 1}. ${item}`).join('\n');
+  const lines = [`Reclamante: ${params.clientName}`];
 
-  let message = `Hola, adjunto la documentación correspondiente al reclamo.\n\n`;
   if (params.producerName) {
-    message += `PAS: ${params.producerName}\n`;
+    lines.push(`PAS: ${params.producerName}`);
   }
-  message += `Reclamante: ${params.clientName}\n\n`;
-  message += `Documentación a adjuntar:\n${listText}`;
 
-  return message;
+  if (params.companyName) {
+    lines.push(`Compañía a reclamar: ${params.companyName}`);
+  }
+
+  return lines.join('\n');
 }
 
 export function getAttachDocumentationWhatsAppUrl(params: {
   producerName: string;
   clientName: string;
-  claimType: ClaimTypeLetter;
+  companyName: string;
 }): string {
   const text = buildAttachDocumentationWhatsAppMessage(params);
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;

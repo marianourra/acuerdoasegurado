@@ -7,23 +7,26 @@ import {
   getAdminClaims,
   updateClaimById,
   deleteClaimById,
+  claimToEditForm,
+  buildSavePatch,
   type AdminClaimRow,
   type ClaimPatch,
 } from '../services/adminClaimsService';
 import { getCompanies } from '../services/companiesService';
-import { getClaimStatusesOrdered } from '../services/claimsService';
-import { claimTypeLabels } from '../constants/claimTypes';
-import type { ClaimTypeLetter } from '../services/claimsService';
-import AdminNav from '../components/AdminNav';
-
-const formatDate = (date: string | null | undefined) =>
-  date
-    ? new Date(date).toLocaleDateString('es-AR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-      })
-    : '—';
+import { getClaimStatusesOrdered, isAcordadoClaim, isFinalizedClaim } from '../services/claimsService';
+import { getAdminProducers } from '../services/adminProducersService';
+import { getAsistentes, type Asistente } from '../services/asistentesService';
+import { getAbogados, type Abogado } from '../services/abogadosService';
+import AdminClaimCard from '../components/AdminClaimCard';
+import AdminClaimEditModal from '../components/AdminClaimEditModal';
+import ClaimsStatusCollapse from '../components/ClaimsStatusCollapse';
+import {
+  GROUP_EN_TRAMITE,
+  GROUP_FINALIZADOS,
+  GROUP_ACORDADO_PENDIENTE_PAGO,
+  ADMIN_CLAIM_GROUP_META,
+  ADMIN_DEFAULT_EXPANDED_SECTIONS,
+} from '../constants/claimGroups';
 
 export default function AdminClaims() {
   const navigate = useNavigate();
@@ -31,17 +34,22 @@ export default function AdminClaims() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [claims, setClaims] = useState<AdminClaimRow[]>([]);
   const [companies, setCompanies] = useState<{ id: string; name: string }[]>([]);
+  const [producers, setProducers] = useState<{ id: number; name: string | null }[]>([]);
   const [statuses, setStatuses] = useState<{ id: string; name: string; color: string | null }[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingClaim, setEditingClaim] = useState<AdminClaimRow | null>(null);
   const [editForm, setEditForm] = useState<ClaimPatch>({});
+  const [asistentes, setAsistentes] = useState<Asistente[]>([]);
+  const [abogados, setAbogados] = useState<Abogado[]>([]);
   const [saveLoading, setSaveLoading] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(ADMIN_DEFAULT_EXPANDED_SECTIONS);
 
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [companyFilter, setCompanyFilter] = useState<string>('all');
+  const [producerFilter, setProducerFilter] = useState<string>('all');
   const [q, setQ] = useState<string>('');
 
   const filteredClaims = useMemo(() => {
@@ -49,13 +57,15 @@ export default function AdminClaims() {
     return claims.filter((c) => {
       if (statusFilter !== 'all' && c.claim_statuses?.id !== statusFilter) return false;
       if (companyFilter !== 'all' && c.companies?.id !== companyFilter) return false;
+      if (producerFilter !== 'all' && String(c.producer_id) !== producerFilter) return false;
       if (query) {
         const haystack = [
           c.client_name,
-          (c as { claim_number?: string }).claim_number,
+          c.claim_number,
           c.description,
           c.companies?.name,
           c.claim_statuses?.name,
+          c.producers?.name,
         ]
           .filter(Boolean)
           .join(' ')
@@ -64,7 +74,58 @@ export default function AdminClaims() {
       }
       return true;
     });
-  }, [claims, statusFilter, companyFilter, q]);
+  }, [claims, statusFilter, companyFilter, producerFilter, q]);
+
+  const groupedSections = useMemo(() => {
+    const enTramite: AdminClaimRow[] = [];
+    const acordadoPendiente: AdminClaimRow[] = [];
+    const finalizados: AdminClaimRow[] = [];
+
+    for (const claim of filteredClaims) {
+      if (isAcordadoClaim(claim)) {
+        acordadoPendiente.push(claim);
+      } else if (isFinalizedClaim(claim)) {
+        finalizados.push(claim);
+      } else {
+        enTramite.push(claim);
+      }
+    }
+
+    const sections: Array<{ id: string; name: string; color: string; claims: AdminClaimRow[] }> = [];
+
+    if (enTramite.length > 0) {
+      sections.push({
+        id: GROUP_EN_TRAMITE,
+        ...ADMIN_CLAIM_GROUP_META[GROUP_EN_TRAMITE],
+        claims: enTramite,
+      });
+    }
+
+    if (acordadoPendiente.length > 0) {
+      sections.push({
+        id: GROUP_ACORDADO_PENDIENTE_PAGO,
+        ...ADMIN_CLAIM_GROUP_META[GROUP_ACORDADO_PENDIENTE_PAGO],
+        claims: acordadoPendiente,
+      });
+    }
+
+    if (finalizados.length > 0) {
+      sections.push({
+        id: GROUP_FINALIZADOS,
+        ...ADMIN_CLAIM_GROUP_META[GROUP_FINALIZADOS],
+        claims: finalizados,
+      });
+    }
+
+    return sections;
+  }, [filteredClaims]);
+
+  const toggleSection = (sectionId: string) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [sectionId]: !prev[sectionId],
+    }));
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -91,8 +152,11 @@ export default function AdminClaims() {
       getAdminClaims(),
       getCompanies(),
       getClaimStatusesOrdered(),
+      getAdminProducers(),
+      getAsistentes(),
+      getAbogados(),
     ])
-      .then(([claimsRes, companiesRes, statusesRes]) => {
+      .then(([claimsRes, companiesRes, statusesRes, producersRes, asistentesRes, abogadosRes]) => {
         if (claimsRes.error) {
           setError(claimsRes.error.message);
           setClaims([]);
@@ -108,43 +172,30 @@ export default function AdminClaims() {
               color: s.color ?? null,
             }))
           );
+        if (producersRes.data) setProducers(producersRes.data);
+        if (asistentesRes.data) setAsistentes(asistentesRes.data);
+        if (abogadosRes.data) setAbogados(abogadosRes.data);
       })
       .finally(() => setLoading(false));
   }, [isAdmin]);
 
   const openEdit = (claim: AdminClaimRow) => {
-    setEditingId(claim.id);
-    setEditForm({
-      status_id: claim.status_id,
-      company_id: claim.company_id,
-      amount_agreed: claim.amount_agreed ?? undefined,
-      producer_profit: claim.producer_profit ?? undefined,
-      payment_date: claim.payment_date ?? undefined,
-      finished_at: claim.finished_at ?? undefined,
-      description: claim.description ?? undefined,
-    });
+    setEditingClaim(claim);
+    setEditForm(claimToEditForm(claim));
     setSaveError(null);
   };
 
   const closeEdit = () => {
-    setEditingId(null);
+    setEditingClaim(null);
     setSaveError(null);
   };
 
   const handleSaveEdit = async () => {
-    if (editingId == null) return;
+    if (editingClaim == null) return;
     setSaveLoading(true);
     setSaveError(null);
-    const patch: ClaimPatch = {
-      status_id: editForm.status_id,
-      company_id: editForm.company_id,
-      amount_agreed: editForm.amount_agreed ?? null,
-      producer_profit: editForm.producer_profit ?? null,
-      payment_date: editForm.payment_date || null,
-      finished_at: editForm.finished_at || null,
-      description: editForm.description ?? null,
-    };
-    const { error: err } = await updateClaimById(editingId, patch);
+    const patch = buildSavePatch(editForm);
+    const { error: err } = await updateClaimById(editingClaim.id, patch);
     setSaveLoading(false);
     if (err) {
       setSaveError(err.message);
@@ -183,8 +234,6 @@ export default function AdminClaims() {
   return (
     <MainLayout>
       <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-        <AdminNav active="claims" />
-
         <h1
           style={{
             margin: '0 0 24px',
@@ -250,6 +299,18 @@ export default function AdminClaims() {
               />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10 }}>
                 <select
+                  value={producerFilter}
+                  onChange={(e) => setProducerFilter(e.target.value)}
+                  style={{ width: '100%', padding: 12, borderRadius: 10, border: '1px solid #e2e8f0', fontSize: 14 }}
+                >
+                  <option value="all">Todos los productores</option>
+                  {producers.map((p) => (
+                    <option key={p.id} value={String(p.id)}>
+                      {p.name ?? `Productor #${p.id}`}
+                    </option>
+                  ))}
+                </select>
+                <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
                   style={{ width: '100%', padding: 12, borderRadius: 10, border: '1px solid #e2e8f0', fontSize: 14 }}
@@ -282,355 +343,43 @@ export default function AdminClaims() {
                   {claims.length === 0 ? 'No hay reclamos.' : 'Ningún reclamo coincide con los filtros.'}
                 </p>
               )}
-              {filteredClaims.map((claim) => (
-              <div
-                key={claim.id}
-                style={{
-                  background: '#fff',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: 14,
-                  padding: 16,
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                }}
-              >
-                <div
-                  style={{
-                    display: 'grid',
-                    gap: 12,
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
-                  }}
+              {groupedSections.map((section) => (
+                <ClaimsStatusCollapse
+                  key={section.id}
+                  statusId={section.id}
+                  statusName={section.name}
+                  statusColor={section.color}
+                  claimCount={section.claims.length}
+                  isExpanded={expandedSections[section.id] !== false}
+                  onToggle={() => toggleSection(section.id)}
                 >
-                  <div>
-                    <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600, marginBottom: 2 }}>Cliente</div>
-                    <div style={{ fontSize: 14, fontWeight: 500, color: '#0f172a' }}>{claim.client_name ?? '—'}</div>
-                    {claim.client_phone != null && claim.client_phone !== '' && (
-                      <div style={{ fontSize: 13, color: '#64748b', marginTop: 2 }}>{claim.client_phone}</div>
-                    )}
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600, marginBottom: 2 }}>Compañía</div>
-                    <div style={{ fontSize: 14, color: '#334155' }}>{claim.companies?.name ?? '—'}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600, marginBottom: 2 }}>Estado</div>
-                    <span
-                      style={{
-                        display: 'inline-block',
-                        padding: '4px 10px',
-                        borderRadius: 8,
-                        fontSize: 12,
-                        fontWeight: 600,
-                        backgroundColor: claim.claim_statuses?.color ?? '#64748b',
-                        color: '#fff',
-                      }}
-                    >
-                      {claim.claim_statuses?.name ?? '—'}
-                    </span>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600, marginBottom: 2 }}>Montos</div>
-                    <div style={{ fontSize: 13, color: '#334155' }}>
-                      Reclamado: {claim.amount_claimed != null ? `$${Number(claim.amount_claimed).toLocaleString()}` : '—'}
-                    </div>
-                    <div style={{ fontSize: 13, color: '#334155' }}>
-                      Acuerdo: {claim.amount_agreed != null ? `$${Number(claim.amount_agreed).toLocaleString()}` : '—'}
-                    </div>
-                    <div style={{ fontSize: 13, color: '#334155' }}>
-                      Beneficio: {claim.producer_profit != null ? `$${Number(claim.producer_profit).toLocaleString()}` : '—'}
-                    </div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600, marginBottom: 2 }}>Tipo</div>
-                    <div style={{ fontSize: 13, color: '#334155' }}>
-                      {claim.type && claimTypeLabels[claim.type as ClaimTypeLetter]
-                        ? claimTypeLabels[claim.type as ClaimTypeLetter]
-                        : claim.type ?? '—'}
-                    </div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600, marginBottom: 2 }}>Fechas</div>
-                    <div style={{ fontSize: 13, color: '#334155' }}>Pago: {formatDate(claim.payment_date)}</div>
-                    <div style={{ fontSize: 13, color: '#334155' }}>Fin: {formatDate(claim.finished_at)}</div>
-                  </div>
-                </div>
-                <div style={{ marginTop: 14, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  <button
-                    type="button"
-                    onClick={() => openEdit(claim)}
-                    style={{
-                      padding: '8px 14px',
-                      borderRadius: 8,
-                      border: '1px solid #667eea',
-                      background: '#fff',
-                      color: '#667eea',
-                      fontSize: 13,
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Editar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(claim.id, claim.client_name ?? '')}
-                    style={{
-                      padding: '8px 14px',
-                      borderRadius: 8,
-                      border: '1px solid #dc2626',
-                      background: '#fff',
-                      color: '#dc2626',
-                      fontSize: 13,
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Eliminar
-                  </button>
-                </div>
-              </div>
-            ))}
+                  {section.claims.map((claim) => (
+                    <AdminClaimCard
+                      key={claim.id}
+                      claim={claim}
+                      onEdit={openEdit}
+                      onDelete={handleDelete}
+                    />
+                  ))}
+                </ClaimsStatusCollapse>
+              ))}
             </div>
 
-        {/* Modal edición */}
-        {editingId != null && (
-          <div
-            style={{
-              position: 'fixed',
-              inset: 0,
-              background: 'rgba(0,0,0,0.4)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 100,
-              padding: 16,
-            }}
-            onClick={(e) => e.target === e.currentTarget && closeEdit()}
-          >
-            <div
-              style={{
-                background: '#fff',
-                borderRadius: 16,
-                padding: 24,
-                maxWidth: 480,
-                width: '100%',
-                maxHeight: '90vh',
-                overflowY: 'auto',
-                boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h2 style={{ margin: '0 0 20px', fontSize: 20, fontWeight: 700, color: '#0f172a' }}>
-                Editar reclamo
-              </h2>
-              {saveError && (
-                <div
-                  style={{
-                    marginBottom: 16,
-                    padding: 10,
-                    borderRadius: 8,
-                    background: '#fef2f2',
-                    color: '#dc2626',
-                    fontSize: 13,
-                  }}
-                >
-                  {saveError}
-                </div>
-              )}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 4 }}>
-                    Estado
-                  </label>
-                  <select
-                    value={editForm.status_id ?? ''}
-                    onChange={(e) => setEditForm((f) => ({ ...f, status_id: e.target.value }))}
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      borderRadius: 8,
-                      border: '1px solid #e2e8f0',
-                      fontSize: 14,
-                    }}
-                  >
-                    {statuses.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 4 }}>
-                    Compañía
-                  </label>
-                  <select
-                    value={editForm.company_id ?? ''}
-                    onChange={(e) => setEditForm((f) => ({ ...f, company_id: e.target.value }))}
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      borderRadius: 8,
-                      border: '1px solid #e2e8f0',
-                      fontSize: 14,
-                    }}
-                  >
-                    {companies.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 4 }}>
-                    Monto acuerdo
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    step={0.01}
-                    value={editForm.amount_agreed ?? ''}
-                    onChange={(e) =>
-                      setEditForm((f) => ({
-                        ...f,
-                        amount_agreed: e.target.value === '' ? undefined : Number(e.target.value),
-                      }))
-                    }
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      borderRadius: 8,
-                      border: '1px solid #e2e8f0',
-                      fontSize: 14,
-                    }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 4 }}>
-                    Beneficio productor
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    step={0.01}
-                    value={editForm.producer_profit ?? ''}
-                    onChange={(e) =>
-                      setEditForm((f) => ({
-                        ...f,
-                        producer_profit: e.target.value === '' ? undefined : Number(e.target.value),
-                      }))
-                    }
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      borderRadius: 8,
-                      border: '1px solid #e2e8f0',
-                      fontSize: 14,
-                    }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 4 }}>
-                    Fecha de pago
-                  </label>
-                  <input
-                    type="date"
-                    value={
-                      editForm.payment_date
-                        ? new Date(editForm.payment_date).toISOString().slice(0, 10)
-                        : ''
-                    }
-                    onChange={(e) =>
-                      setEditForm((f) => ({ ...f, payment_date: e.target.value ? e.target.value : undefined }))
-                    }
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      borderRadius: 8,
-                      border: '1px solid #e2e8f0',
-                      fontSize: 14,
-                    }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 4 }}>
-                    Fecha de finalización
-                  </label>
-                  <input
-                    type="date"
-                    value={
-                      editForm.finished_at
-                        ? new Date(editForm.finished_at).toISOString().slice(0, 10)
-                        : ''
-                    }
-                    onChange={(e) =>
-                      setEditForm((f) => ({ ...f, finished_at: e.target.value ? e.target.value : undefined }))
-                    }
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      borderRadius: 8,
-                      border: '1px solid #e2e8f0',
-                      fontSize: 14,
-                    }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 4 }}>
-                    Observaciones
-                  </label>
-                  <textarea
-                    value={editForm.description ?? ''}
-                    onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))}
-                    rows={4}
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      borderRadius: 8,
-                      border: '1px solid #e2e8f0',
-                      fontSize: 14,
-                      resize: 'vertical',
-                    }}
-                  />
-                </div>
-              </div>
-              <div style={{ marginTop: 24, display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-                <button
-                  type="button"
-                  onClick={closeEdit}
-                  style={{
-                    padding: '10px 18px',
-                    borderRadius: 8,
-                    border: '1px solid #e2e8f0',
-                    background: '#fff',
-                    color: '#475569',
-                    fontSize: 14,
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSaveEdit}
-                  disabled={saveLoading}
-                  style={{
-                    padding: '10px 18px',
-                    borderRadius: 8,
-                    border: 'none',
-                    background: saveLoading ? '#94a3b8' : '#667eea',
-                    color: '#fff',
-                    fontSize: 14,
-                    fontWeight: 600,
-                    cursor: saveLoading ? 'not-allowed' : 'pointer',
-                  }}
-                >
-                  {saveLoading ? 'Guardando...' : 'Guardar cambios'}
-                </button>
-              </div>
-            </div>
-          </div>
+        {editingClaim != null && (
+          <AdminClaimEditModal
+            claim={editingClaim}
+            editForm={editForm}
+            setEditForm={setEditForm}
+            companies={companies}
+            producers={producers}
+            statuses={statuses}
+            asistentes={asistentes}
+            abogados={abogados}
+            saveLoading={saveLoading}
+            saveError={saveError}
+            onClose={closeEdit}
+            onSave={handleSaveEdit}
+          />
         )}
           </>
         )}
