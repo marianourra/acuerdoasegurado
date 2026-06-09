@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../services/supabaseClient';
+import { loadRememberedLogin, saveRememberedLogin } from '../utils/rememberLogin';
 
 export default function UserProfile() {
   const auth = useAuth();
@@ -26,6 +27,11 @@ export default function UserProfile() {
   }, [isOpen]);
 
   const handleLogout = async () => {
+    const remembered = loadRememberedLogin();
+    const sessionEmail = auth.user?.email;
+    if (remembered?.remember && sessionEmail && remembered.email !== sessionEmail) {
+      saveRememberedLogin(sessionEmail, remembered.password);
+    }
     await supabase.auth.signOut();
     navigate('/login');
   };

@@ -2,12 +2,18 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
 import { isCurrentUserAdmin } from '../services/adminService';
+import {
+  clearRememberedLogin,
+  loadRememberedLogin,
+  saveRememberedLogin,
+} from '../utils/rememberLogin';
 import logo from '../images/logo.png';
 import backImage from '../images/back.png';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberCredentials, setRememberCredentials] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
@@ -18,18 +24,13 @@ export default function Login() {
 
   const navigate = useNavigate();
 
-  // ✅ TEST de conectividad al cargar la pantalla
   useEffect(() => {
-    (async () => {
-      console.log('🔎 ENV URL:', import.meta.env.VITE_SUPABASE_URL);
-      console.log(
-        '🔎 ENV KEY exists?:',
-        Boolean(import.meta.env.VITE_SUPABASE_ANON_KEY)
-      );
-
-      const res = await supabase.auth.getSession();
-      console.log('✅ getSession result:', res);
-    })();
+    const remembered = loadRememberedLogin();
+    if (remembered) {
+      setEmail(remembered.email);
+      setPassword(remembered.password);
+      setRememberCredentials(true);
+    }
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -56,6 +57,11 @@ export default function Login() {
           setError(error.message);
         }
       } else {
+        if (rememberCredentials) {
+          saveRememberedLogin(email, password);
+        } else {
+          clearRememberedLogin();
+        }
         const admin = await isCurrentUserAdmin();
         navigate(admin ? '/admin/claims' : '/dashboard');
       }
@@ -204,9 +210,10 @@ export default function Login() {
           </p>
         </div>
 
-        <form onSubmit={handleLogin}>
+        <form onSubmit={handleLogin} autoComplete="on">
           <div style={{ marginBottom: 20 }}>
             <label
+              htmlFor="login-email"
               style={{
                 display: 'block',
                 fontSize: 14,
@@ -218,10 +225,13 @@ export default function Login() {
               Email
             </label>
             <input
+              id="login-email"
+              name="email"
               type="email"
               placeholder="tu@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              autoComplete="username email"
               required
               style={{
                 width: '100%',
@@ -245,6 +255,7 @@ export default function Login() {
 
           <div style={{ marginBottom: 12 }}>
             <label
+              htmlFor="login-password"
               style={{
                 display: 'block',
                 fontSize: 14,
@@ -256,10 +267,13 @@ export default function Login() {
               Contraseña
             </label>
             <input
+              id="login-password"
+              name="password"
               type="password"
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
               required
               style={{
                 width: '100%',
@@ -281,7 +295,35 @@ export default function Login() {
             />
           </div>
 
-          <div style={{ marginBottom: 24, textAlign: 'right' }}>
+          <div
+            style={{
+              marginBottom: 24,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+              flexWrap: 'wrap',
+            }}
+          >
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                fontSize: 13,
+                color: '#475569',
+                cursor: 'pointer',
+                userSelect: 'none',
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={rememberCredentials}
+                onChange={(e) => setRememberCredentials(e.target.checked)}
+                style={{ width: 16, height: 16, accentColor: '#667eea', cursor: 'pointer' }}
+              />
+              Recordar usuario y contraseña
+            </label>
             <button
               type="button"
               onClick={() => {
