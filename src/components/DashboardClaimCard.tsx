@@ -1,6 +1,12 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { claimTypeLabels } from '../constants/claimTypes';
-import { hasClaimUnreadUpdates, type ClaimTypeLetter } from '../services/claimsService';
+import {
+  hasClaimUnreadUpdates,
+  updateProducerClaimPasFields,
+  type ClaimTypeLetter,
+} from '../services/claimsService';
 import CompanyLogo from './CompanyLogo';
 import { formatDateLocal } from '../utils/dateUtils';
 
@@ -14,11 +20,37 @@ type DashboardClaimCardProps = {
     presentation_date?: string | null;
     updated_at?: string;
     producer_viewed_at?: string | null;
+    taller_inspeccion?: string | null;
+    observaciones_pas?: string | null;
     companies?: { name?: string; logo_url?: string } | null;
   };
   showStatus?: boolean;
   statusName?: string;
   statusColor?: string;
+  onPasFieldsSaved?: (
+    claimId: number,
+    fields: { taller_inspeccion: string | null; observaciones_pas: string | null }
+  ) => void;
+};
+
+const fieldInputStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '8px 10px',
+  borderRadius: 8,
+  border: '1px solid #e2e8f0',
+  fontSize: 13,
+  color: '#334155',
+  background: '#fff',
+};
+
+const fieldLabelStyle: React.CSSProperties = {
+  display: 'block',
+  fontSize: 11,
+  fontWeight: 700,
+  color: '#64748b',
+  marginBottom: 4,
+  textTransform: 'uppercase',
+  letterSpacing: '0.03em',
 };
 
 function UnreadBadge() {
@@ -74,26 +106,74 @@ export default function DashboardClaimCard({
   showStatus = false,
   statusName,
   statusColor,
+  onPasFieldsSaved,
 }: DashboardClaimCardProps) {
+  const { user } = useAuth();
   const hasUnread = hasClaimUnreadUpdates(claim);
   const showMeta = showStatus || hasUnread;
 
+  const [tallerInspeccion, setTallerInspeccion] = useState(claim.taller_inspeccion ?? '');
+  const [observacionesPas, setObservacionesPas] = useState(claim.observaciones_pas ?? '');
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setTallerInspeccion(claim.taller_inspeccion ?? '');
+    setObservacionesPas(claim.observaciones_pas ?? '');
+  }, [claim.taller_inspeccion, claim.observaciones_pas, claim.id]);
+
+  const savePasFields = async () => {
+    if (!user?.id) return;
+
+    const trimmedTaller = tallerInspeccion.trim();
+    const trimmedObs = observacionesPas.trim();
+    const currentTaller = (claim.taller_inspeccion ?? '').trim();
+    const currentObs = (claim.observaciones_pas ?? '').trim();
+
+    if (trimmedTaller === currentTaller && trimmedObs === currentObs) return;
+
+    setSaveState('saving');
+    setSaveError(null);
+
+    const { error } = await updateProducerClaimPasFields(user.id, Number(claim.id), {
+      taller_inspeccion: trimmedTaller || null,
+      observaciones_pas: trimmedObs || null,
+    });
+
+    if (error) {
+      setSaveState('error');
+      setSaveError(error.message);
+      return;
+    }
+
+    setSaveState('saved');
+    onPasFieldsSaved?.(Number(claim.id), {
+      taller_inspeccion: trimmedTaller || null,
+      observaciones_pas: trimmedObs || null,
+    });
+    setTimeout(() => setSaveState('idle'), 2000);
+  };
+
+  const stopNav = (e: React.MouseEvent | React.FocusEvent) => {
+    e.stopPropagation();
+  };
+
   return (
-    <Link
-      to={`/claims/${claim.id}`}
-      style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
-      className="dashboard-claim-card-link"
+    <div
+      className="dashboard-claim-card"
+      style={{
+        border: hasUnread ? '1px solid #bbf7d0' : '1px solid #e2e8f0',
+        padding: 14,
+        borderRadius: 14,
+        background: hasUnread ? '#f0fdf4' : '#fff',
+        boxShadow: hasUnread ? '0 0 0 1px rgba(22, 163, 74, 0.1)' : 'none',
+        transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+      }}
     >
-      <div
-        className="dashboard-claim-card"
-        style={{
-          border: hasUnread ? '1px solid #bbf7d0' : '1px solid #e2e8f0',
-          padding: 14,
-          borderRadius: 14,
-          background: hasUnread ? '#f0fdf4' : '#fff',
-          boxShadow: hasUnread ? '0 0 0 1px rgba(22, 163, 74, 0.1)' : 'none',
-          transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
-        }}
+      <Link
+        to={`/claims/${claim.id}`}
+        style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
+        className="dashboard-claim-card-link"
       >
         <div
           style={{
@@ -169,7 +249,57 @@ export default function DashboardClaimCard({
             </div>
           )}
         </div>
+      </Link>
+
+      <div
+        style={{
+          marginTop: 12,
+          paddingTop: 12,
+          borderTop: '1px solid #f1f5f9',
+          display: 'grid',
+          gap: 10,
+        }}
+        onClick={stopNav}
+        onMouseDown={stopNav}
+      >
+        <div>
+          <label style={fieldLabelStyle} htmlFor={`taller-${claim.id}`}>
+            Taller inspección
+          </label>
+          <input
+            id={`taller-${claim.id}`}
+            type="text"
+            value={tallerInspeccion}
+            onChange={(e) => setTallerInspeccion(e.target.value)}
+            onBlur={savePasFields}
+            placeholder="Nombre del taller"
+            style={fieldInputStyle}
+          />
+        </div>
+        <div>
+          <label style={fieldLabelStyle} htmlFor={`obs-${claim.id}`}>
+            Observaciones del PAS
+          </label>
+          <textarea
+            id={`obs-${claim.id}`}
+            value={observacionesPas}
+            onChange={(e) => setObservacionesPas(e.target.value)}
+            onBlur={savePasFields}
+            placeholder="Notas del PAS sobre este reclamo"
+            rows={2}
+            style={{ ...fieldInputStyle, resize: 'vertical', minHeight: 56 }}
+          />
+        </div>
+        {saveState === 'saving' && (
+          <span style={{ fontSize: 11, color: '#64748b' }}>Guardando...</span>
+        )}
+        {saveState === 'saved' && (
+          <span style={{ fontSize: 11, color: '#16a34a', fontWeight: 600 }}>Guardado</span>
+        )}
+        {saveState === 'error' && saveError && (
+          <span style={{ fontSize: 11, color: '#dc2626' }}>{saveError}</span>
+        )}
       </div>
-    </Link>
+    </div>
   );
 }

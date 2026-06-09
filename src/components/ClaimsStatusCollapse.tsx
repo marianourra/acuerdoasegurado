@@ -7,8 +7,11 @@ type Claim = {
   claim_number?: string | number | null;
   type?: string;
   created_at?: string;
+  presentation_date?: string | null;
   updated_at?: string;
   producer_viewed_at?: string | null;
+  taller_inspeccion?: string | null;
+  observaciones_pas?: string | null;
   companies?: { name?: string; logo_url?: string } | null;
   claim_statuses?: { name?: string; color?: string } | null;
 };
@@ -22,6 +25,10 @@ type ClaimsStatusCollapseProps = {
   isExpanded: boolean;
   onToggle: () => void;
   children?: ReactNode;
+  onPasFieldsSaved?: (
+    claimId: number,
+    fields: { taller_inspeccion: string | null; observaciones_pas: string | null }
+  ) => void;
 };
 
 export default function ClaimsStatusCollapse({
@@ -32,6 +39,7 @@ export default function ClaimsStatusCollapse({
   isExpanded,
   onToggle,
   children,
+  onPasFieldsSaved,
 }: ClaimsStatusCollapseProps) {
   const count = claimCount ?? claims.length;
   return (
@@ -131,6 +139,7 @@ export default function ClaimsStatusCollapse({
                 showStatus
                 statusName={claim.claim_statuses?.name}
                 statusColor={claim.claim_statuses?.color}
+                onPasFieldsSaved={onPasFieldsSaved}
               />
             ))}
         </div>

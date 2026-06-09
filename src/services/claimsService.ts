@@ -124,6 +124,35 @@ export async function markClaimViewedByProducer(
   return { error: null };
 }
 
+export type ProducerClaimPasFields = {
+  taller_inspeccion?: string | null;
+  observaciones_pas?: string | null;
+};
+
+export async function updateProducerClaimPasFields(
+  userId: string,
+  claimId: number,
+  fields: ProducerClaimPasFields
+): Promise<{ error: { message: string } | null }> {
+  const { data: producerId, error: producerError } = await getMyProducerId(userId);
+  if (producerError || !producerId) {
+    return { error: { message: producerError?.message ?? 'Productor no encontrado.' } };
+  }
+
+  const { error } = await supabase
+    .from('claims')
+    .update({
+      taller_inspeccion: fields.taller_inspeccion?.trim() || null,
+      observaciones_pas: fields.observaciones_pas?.trim() || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', claimId)
+    .eq('producer_id', producerId);
+
+  if (error) return { error: { message: error.message } };
+  return { error: null };
+}
+
 export type CreateClaimPayload = {
   producer_id: string;
   company_id: string;
@@ -182,6 +211,8 @@ export async function getMyClaims(userId: string) {
       producer_viewed_at,
       presentation_date,
       finished_at,
+      taller_inspeccion,
+      observaciones_pas,
       claim_statuses!inner (
         id,
         name,
@@ -229,6 +260,8 @@ export async function getMyClaimById(userId: string, claimId: number) {
       presentation_date,
       finished_at,
       payment_date,
+      taller_inspeccion,
+      observaciones_pas,
       claim_statuses!inner (
         id,
         name,

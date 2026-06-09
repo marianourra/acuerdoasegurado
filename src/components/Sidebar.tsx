@@ -92,6 +92,22 @@ const adminMenuItems = [
       </svg>
     ),
   },
+  {
+    path: '/admin/fees',
+    label: 'Honorarios',
+    match: (path: string) => path.startsWith('/admin/fees'),
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M10 2v16M6 6h5.5a2.5 2.5 0 100-5H8M14 14H8.5a2.5 2.5 0 100 5H14"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    ),
+  },
   // Oculto temporalmente
   // {
   //   path: '/admin/transfers',

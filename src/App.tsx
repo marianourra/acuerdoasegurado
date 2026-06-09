@@ -15,6 +15,7 @@ import ProducerStatistics from './pages/ProducerStatistics';
 import AdminClaims from './pages/AdminClaims';
 import AdminProducers from './pages/AdminProducers';
 import AdminCompanies from './pages/AdminCompanies';
+import AdminFees from './pages/AdminFees';
 // Oculto temporalmente
 // import AdminTransfers from './pages/AdminTransfers';
 
@@ -118,6 +119,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <AdminCompanies />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/fees"
+        element={
+          <ProtectedRoute>
+            <AdminFees />
           </ProtectedRoute>
         }
       />

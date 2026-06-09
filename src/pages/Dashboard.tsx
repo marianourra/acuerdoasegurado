@@ -135,6 +135,19 @@ export default function Dashboard() {
     }));
   };
 
+  const handlePasFieldsSaved = (
+    claimId: number,
+    fields: { taller_inspeccion: string | null; observaciones_pas: string | null }
+  ) => {
+    setClaims((prev) =>
+      prev.map((c) =>
+        Number(c.id) === claimId
+          ? { ...c, taller_inspeccion: fields.taller_inspeccion, observaciones_pas: fields.observaciones_pas }
+          : c
+      )
+    );
+  };
+
   if (authLoading) return <MainLayout><LoadingSpinner text="Cargando sesión..." /></MainLayout>;
   if (!user) return null;
   if (loading) return <MainLayout><LoadingSpinner text="Cargando reclamos..." /></MainLayout>;
@@ -307,6 +320,7 @@ export default function Dashboard() {
               claims={section.claims}
               isExpanded={expandedSections[section.id] !== false}
               onToggle={() => toggleSection(section.id)}
+              onPasFieldsSaved={handlePasFieldsSaved}
             />
           ))}
         </div>
