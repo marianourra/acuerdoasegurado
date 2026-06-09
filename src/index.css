@@ -72,3 +72,34 @@ body {
   visibility: visible;
   transform: translateY(0);
 }
+
+.admin-impago-alert {
+  position: relative;
+}
+
+.admin-impago-alert::after {
+  content: 'Venció la fecha de pago acordada';
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #0f172a;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(4px);
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
+  pointer-events: none;
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+}
+
+.admin-impago-alert:hover::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}

@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient';
+import { isPaymentDateOverdue } from '../utils/dateUtils';
 
 const DEFAULT_STATUS_ID = '10425a79-8097-4459-94d3-fffd8c872390';
 
@@ -52,6 +53,15 @@ export function isAcordadoClaim(claim: {
   const statusId = claim.status_id ?? claim.claim_statuses?.id ?? null;
   if (statusId === ACORDADO_STATUS_ID) return true;
   return claim.claim_statuses?.name?.trim().toLowerCase() === 'acordado';
+}
+
+/** Acordado con fecha de pago vencida y aún sin cobrar (sigue en estado Acordado). */
+export function isAcordadoImpago(claim: {
+  payment_date?: string | null;
+  status_id?: string | null;
+  claim_statuses?: { id?: string; name?: string } | null;
+}): boolean {
+  return isAcordadoClaim(claim) && isPaymentDateOverdue(claim.payment_date);
 }
 
 export function isFinalizedClaim(claim: {

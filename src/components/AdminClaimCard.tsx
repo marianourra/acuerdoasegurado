@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { claimTypeLabels } from '../constants/claimTypes';
-import { isAcordadoClaim, type ClaimTypeLetter } from '../services/claimsService';
+import { isAcordadoClaim, isAcordadoImpago, type ClaimTypeLetter } from '../services/claimsService';
 import type { AdminClaimRow } from '../services/adminClaimsService';
 import { formatDate, formatMoney, getAdminClaimFieldSections, getClaimFeesAmount } from '../utils/adminClaimFormat';
 import CompanyLogo from './CompanyLogo';
@@ -73,23 +73,57 @@ function HighlightMetric({
   );
 }
 
+function ImpagoAlert() {
+  return (
+    <span
+      className="admin-impago-alert"
+      aria-label="Convenio impago"
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+        padding: '6px 10px',
+        borderRadius: 999,
+        background: '#fef2f2',
+        border: '1px solid #fecaca',
+        color: '#dc2626',
+        fontSize: 12,
+        fontWeight: 700,
+        flexShrink: 0,
+        whiteSpace: 'nowrap',
+      }}
+    >
+      <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
+        <path
+          fillRule="evenodd"
+          d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+          clipRule="evenodd"
+        />
+      </svg>
+      Convenio impago
+    </span>
+  );
+}
+
 export default function AdminClaimCard({ claim, onEdit, onDelete }: AdminClaimCardProps) {
   const [expanded, setExpanded] = useState(false);
   const sections = getAdminClaimFieldSections(claim);
   const hasAgreedAmount = claim.amount_agreed != null && claim.amount_agreed > 0;
   const hasPaymentDate = Boolean(claim.payment_date);
   const isAcordadoPendiente = isAcordadoClaim(claim);
+  const isImpago = isAcordadoImpago(claim);
   const feesAmount = getClaimFeesAmount(claim);
-  const dividerColor = hasPaymentDate ? '#bbf7d0' : '#fde68a';
+  const dividerColor = isImpago ? '#fecaca' : hasPaymentDate ? '#bbf7d0' : '#fde68a';
 
   return (
     <div
       className="dashboard-claim-card"
       style={{
-        border: '1px solid #e2e8f0',
+        border: isImpago ? '1px solid #fecaca' : '1px solid #e2e8f0',
         padding: 14,
         borderRadius: 14,
-        background: '#fff',
+        background: isImpago ? '#fffbfb' : '#fff',
+        boxShadow: isImpago ? '0 0 0 1px rgba(220, 38, 38, 0.08)' : 'none',
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
@@ -127,10 +161,12 @@ export default function AdminClaimCard({ claim, onEdit, onDelete }: AdminClaimCa
                 marginTop: 8,
                 padding: '10px 12px',
                 borderRadius: 10,
-                background: hasPaymentDate
-                  ? 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)'
-                  : 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
-                border: hasPaymentDate ? '1px solid #bbf7d0' : '1px solid #fde68a',
+                background: isImpago
+                  ? 'linear-gradient(135deg, #fef2f2 0%, #fff1f2 100%)'
+                  : hasPaymentDate
+                    ? 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)'
+                    : 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
+                border: isImpago ? '1px solid #fecaca' : hasPaymentDate ? '1px solid #bbf7d0' : '1px solid #fde68a',
               }}
             >
               <HighlightMetric
@@ -159,8 +195,8 @@ export default function AdminClaimCard({ claim, onEdit, onDelete }: AdminClaimCa
               <HighlightMetric
                 label="Fecha de pago"
                 value={hasPaymentDate ? formatDate(claim.payment_date) : 'Pendiente'}
-                labelColor={hasPaymentDate ? '#0284c7' : '#d97706'}
-                valueColor={hasPaymentDate ? '#0f172a' : '#92400e'}
+                labelColor={isImpago ? '#dc2626' : hasPaymentDate ? '#0284c7' : '#d97706'}
+                valueColor={isImpago ? '#991b1b' : hasPaymentDate ? '#0f172a' : '#92400e'}
                 valueSize="clamp(15px, 3.5vw, 17px)"
               />
             </div>
@@ -195,7 +231,8 @@ export default function AdminClaimCard({ claim, onEdit, onDelete }: AdminClaimCa
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          {isImpago && <ImpagoAlert />}
           <span
             style={{
               padding: '6px 10px',

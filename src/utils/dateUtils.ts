@@ -47,6 +47,23 @@ export function getTodayLocalYYYYMMDD(): string {
   return `${y}-${m}-${day}`;
 }
 
+export function parseLocalDate(dateString: string | null | undefined): Date | null {
+  if (!dateString) return null;
+  const match = String(dateString).trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) return null;
+  const [, y, m, d] = match;
+  return new Date(Number(y), Number(m) - 1, Number(d));
+}
+
+/** true si la fecha de pago ya venció (hoy es posterior al vencimiento) */
+export function isPaymentDateOverdue(paymentDate: string | null | undefined): boolean {
+  const due = parseLocalDate(paymentDate);
+  if (!due) return false;
+  const today = parseLocalDate(getTodayLocalYYYYMMDD());
+  if (!today) return false;
+  return due.getTime() < today.getTime();
+}
+
 /** Diferencia en días entre dos fechas solo-día (inicio inclusive hacia fin) */
 export function daysBetweenLocal(start: string, end: string): number {
   const parse = (value: string) => {
