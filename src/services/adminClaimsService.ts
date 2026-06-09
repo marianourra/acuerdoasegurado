@@ -18,6 +18,7 @@ export type AdminClaimRow = {
   fees: number | null;
   is_invoiced: boolean;
   payment_date: string | null;
+  presentation_date: string | null;
   finished_at: string | null;
   description: string | null;
   claim_brief: string | null;
@@ -49,6 +50,7 @@ export type ClaimPatch = {
   fees_percent?: number | null;
   is_invoiced?: boolean;
   payment_date?: string | null;
+  presentation_date?: string | null;
   finished_at?: string | null;
   description?: string | null;
   claim_brief?: string | null;
@@ -70,6 +72,7 @@ export function claimToEditForm(claim: AdminClaimRow): ClaimPatch {
     fees_percent: claim.fees_percent,
     is_invoiced: claim.is_invoiced,
     payment_date: claim.payment_date,
+    presentation_date: claim.presentation_date,
     finished_at: claim.finished_at,
     description: claim.description,
     claim_brief: claim.claim_brief,
@@ -92,6 +95,7 @@ export function buildSavePatch(form: ClaimPatch): ClaimPatch {
     fees_percent: form.fees_percent ?? null,
     is_invoiced: form.is_invoiced ?? false,
     payment_date: form.payment_date || null,
+    presentation_date: form.presentation_date || null,
     finished_at: form.finished_at || null,
     description: form.description?.trim() || null,
     claim_brief: form.claim_brief?.trim() || null,
@@ -125,6 +129,7 @@ export async function getAdminClaims(): Promise<{
       fees,
       is_invoiced,
       payment_date,
+      presentation_date,
       finished_at,
       description,
       claim_brief,

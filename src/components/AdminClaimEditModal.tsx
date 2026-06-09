@@ -107,7 +107,7 @@ export default function AdminClaimEditModal({
     setEditForm((f) => ({ ...f, producer_id: Number(e.target.value) }));
   };
 
-  const setDate = (key: 'payment_date' | 'finished_at') => (e: ChangeEvent<HTMLInputElement>) => {
+  const setDate = (key: 'presentation_date' | 'payment_date' | 'finished_at') => (e: ChangeEvent<HTMLInputElement>) => {
     setEditForm((f) => ({ ...f, [key]: e.target.value || null }));
   };
 
@@ -169,7 +169,7 @@ export default function AdminClaimEditModal({
         >
           <SectionTitle>Identificación</SectionTitle>
 
-          <Field label="Creado (solo lectura)" fullWidth>
+          <Field label="Fecha de creación (solo lectura)" fullWidth>
             <input type="text" readOnly value={formatDateTime(claim.created_at)} style={{ ...inputStyle, background: '#f8fafc' }} />
           </Field>
 
@@ -316,6 +316,10 @@ export default function AdminClaimEditModal({
           </Field>
 
           <SectionTitle>Fechas</SectionTitle>
+
+          <Field label="Fecha de presentación">
+            <input type="date" value={toDateInputValue(editForm.presentation_date)} onChange={setDate('presentation_date')} style={inputStyle} />
+          </Field>
 
           <Field label="Fecha de pago">
             <input type="date" value={toDateInputValue(editForm.payment_date)} onChange={setDate('payment_date')} style={inputStyle} />

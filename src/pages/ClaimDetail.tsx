@@ -13,15 +13,9 @@ import type { ClaimTypeLetter } from '../services/claimsService';
 import MainLayout from '../layouts/MainLayout';
 import LoadingSpinner from '../components/LoadingSpinner';
 import CompanyLogo from '../components/CompanyLogo';
+import { formatDateLocal } from '../utils/dateUtils';
 
-const formatDate = (date: string | null | undefined) =>
-  date
-    ? new Date(date).toLocaleDateString('es-AR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-      })
-    : '—';
+const formatDate = formatDateLocal;
 
 export default function ClaimDetail() {
   const { id } = useParams();
@@ -679,7 +673,8 @@ export default function ClaimDetail() {
                 }}
               >
                 {[
-                  { label: 'Fecha de inicio', value: claim.created_at },
+                  { label: 'Fecha de creación', value: claim.created_at },
+                  { label: 'Fecha de presentación', value: claim.presentation_date },
                   { label: 'Última actualización', value: claim.updated_at },
                   { label: 'Fecha de finalización', value: claim.finished_at },
                   { label: 'Fecha estimativa de pago', value: claim.payment_date },

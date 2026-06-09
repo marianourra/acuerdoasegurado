@@ -124,7 +124,7 @@ export default function ProducerStatistics() {
           label: c.name,
           value: c.avgCloseDays ?? 0,
           color: '#16a34a',
-          sublabel: `Basado en ${c.finalized} caso${c.finalized !== 1 ? 's' : ''} finalizado${c.finalized !== 1 ? 's' : ''}`,
+          sublabel: `Basado en ${c.closingSamples} caso${c.closingSamples !== 1 ? 's' : ''} con presentación y cierre`,
         }));
     }
     return benchmarks
@@ -432,8 +432,8 @@ export default function ProducerStatistics() {
               </div>
               <p style={{ margin: '0 0 14px', fontSize: 13, color: '#64748b' }}>
                 {closingMode === 'mine'
-                  ? 'Promedio de días entre inicio y finalización en tus reclamos por compañía.'
-                  : 'Promedio del stock total de reclamos en la base de datos, por compañía a reclamar.'}
+                  ? 'Promedio de días entre presentación y finalización en tus reclamos por compañía.'
+                  : 'Promedio del stock total de reclamos en la base de datos (presentación → finalización), por compañía.'}
               </p>
               <BarChartPanel
                 items={closingChartItems}
@@ -442,7 +442,7 @@ export default function ProducerStatistics() {
                 onSelect={setSelectedCompanyId}
                 emptyMessage={
                   closingMode === 'mine'
-                    ? 'Aún no tenés casos finalizados con fecha de cierre.'
+                    ? 'Aún no tenés casos con fecha de presentación y finalización.'
                     : 'Sin datos globales. Verificá la función RPC en Supabase.'
                 }
               />

@@ -170,6 +170,7 @@ export async function getMyClaims(userId: string) {
       created_at,
       updated_at,
       producer_viewed_at,
+      presentation_date,
       finished_at,
       claim_statuses!inner (
         id,
@@ -215,6 +216,7 @@ export async function getMyClaimById(userId: string, claimId: number) {
       created_at,
       updated_at,
       producer_viewed_at,
+      presentation_date,
       finished_at,
       payment_date,
       claim_statuses!inner (

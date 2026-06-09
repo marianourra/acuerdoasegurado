@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient';
 import { claimTypeLabels } from '../constants/claimTypes';
+import { daysBetweenLocal } from '../utils/dateUtils';
 import { isFinalizedClaim, type ClaimTypeLetter } from './claimsService';
 
 export type ClaimStatsRow = {
@@ -7,6 +8,7 @@ export type ClaimStatsRow = {
   type: string | null;
   amount_agreed: number | null;
   created_at: string;
+  presentation_date: string | null;
   finished_at: string | null;
   companies: { id: string; name: string; logo_url: string | null } | null;
   claim_statuses: { id: string; name: string; color: string | null } | null;
@@ -25,6 +27,7 @@ export type CompanyStat = {
   logoUrl: string | null;
   count: number;
   finalized: number;
+  closingSamples: number;
   avgCloseDays: number | null;
   totalAgreed: number;
 };
@@ -58,8 +61,9 @@ export type ProducerStatistics = {
   byType: TypeStat[];
 };
 
-function daysBetween(start: string, end: string): number {
-  return (new Date(end).getTime() - new Date(start).getTime()) / (1000 * 60 * 60 * 24);
+function getClosingDays(claim: { presentation_date: string | null; finished_at: string | null }): number | null {
+  if (!claim.presentation_date || !claim.finished_at) return null;
+  return daysBetweenLocal(claim.presentation_date, claim.finished_at);
 }
 
 function average(values: number[]): number | null {
@@ -114,6 +118,7 @@ export function buildProducerStatistics(claims: ClaimStatsRow[]): ProducerStatis
           logoUrl: company.logo_url,
           count: 0,
           finalized: 0,
+          closingSamples: 0,
           avgCloseDays: null,
           totalAgreed: 0,
           closeDays: [],
@@ -121,11 +126,13 @@ export function buildProducerStatistics(claims: ClaimStatsRow[]): ProducerStatis
         companyMap.set(company.id, row);
       }
       row.count += 1;
+      const closingDays = getClosingDays(claim);
       if (claim.finished_at) {
         row.finalized += 1;
-        const days = daysBetween(claim.created_at, claim.finished_at);
-        row.closeDays.push(days);
-        allCloseDays.push(days);
+      }
+      if (closingDays != null) {
+        row.closeDays.push(closingDays);
+        allCloseDays.push(closingDays);
       }
       if (claim.amount_agreed != null && claim.amount_agreed > 0) {
         row.totalAgreed += claim.amount_agreed;
@@ -145,6 +152,7 @@ export function buildProducerStatistics(claims: ClaimStatsRow[]): ProducerStatis
   const byCompany: CompanyStat[] = [...companyMap.values()]
     .map(({ closeDays, ...rest }) => ({
       ...rest,
+      closingSamples: closeDays.length,
       avgCloseDays: average(closeDays),
     }))
     .sort((a, b) => b.count - a.count);
@@ -178,6 +186,7 @@ export async function getProducerClaimsForStats(userId: string): Promise<{
       type,
       amount_agreed,
       created_at,
+      presentation_date,
       finished_at,
       companies!company_id (
         id,

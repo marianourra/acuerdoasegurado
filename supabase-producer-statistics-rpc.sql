@@ -20,10 +20,10 @@ AS $$
     c.company_id,
     co.name AS company_name,
     COUNT(*)::bigint AS total_claims,
-    COUNT(*) FILTER (WHERE c.finished_at IS NOT NULL)::bigint AS finalized_claims,
+    COUNT(*) FILTER (WHERE c.finished_at IS NOT NULL AND c.presentation_date IS NOT NULL)::bigint AS finalized_claims,
     ROUND(
-      AVG(EXTRACT(EPOCH FROM (c.finished_at - c.created_at)) / 86400.0)
-      FILTER (WHERE c.finished_at IS NOT NULL),
+      AVG(EXTRACT(EPOCH FROM (c.finished_at - c.presentation_date::timestamp)) / 86400.0)
+      FILTER (WHERE c.finished_at IS NOT NULL AND c.presentation_date IS NOT NULL),
       1
     ) AS avg_close_days
   FROM public.claims c

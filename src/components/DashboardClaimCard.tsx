@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { claimTypeLabels } from '../constants/claimTypes';
 import { hasClaimUnreadUpdates, type ClaimTypeLetter } from '../services/claimsService';
 import CompanyLogo from './CompanyLogo';
+import { formatDateLocal } from '../utils/dateUtils';
 
 type DashboardClaimCardProps = {
   claim: {
@@ -10,6 +11,7 @@ type DashboardClaimCardProps = {
     claim_number?: string | number | null;
     type?: string;
     created_at?: string;
+    presentation_date?: string | null;
     updated_at?: string;
     producer_viewed_at?: string | null;
     companies?: { name?: string; logo_url?: string } | null;
@@ -126,12 +128,17 @@ export default function DashboardClaimCard({
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, fontSize: 12, color: '#777', marginTop: 4 }}>
               {claim.created_at && (
                 <span>
-                  <strong>Fecha de inicio:</strong>{' '}
+                  <strong>Fecha de creación:</strong>{' '}
                   {new Date(claim.created_at).toLocaleDateString('es-AR', {
                     day: '2-digit',
                     month: '2-digit',
                     year: 'numeric',
                   })}
+                </span>
+              )}
+              {claim.presentation_date && (
+                <span>
+                  <strong>Fecha de presentación:</strong> {formatDateLocal(claim.presentation_date)}
                 </span>
               )}
               {claim.updated_at && (
