@@ -183,6 +183,15 @@ export default function AdminClaimCard({ claim, onEdit, onDelete }: AdminClaimCa
             </div>
           )}
 
+          <div style={{ fontSize: 12, color: '#64748b' }}>
+            <strong>Asistente:</strong>{' '}
+            {claim.asistentes?.nombre ? (
+              <span style={{ color: '#334155', fontWeight: 600 }}>{claim.asistentes.nombre}</span>
+            ) : (
+              <span style={{ color: '#94a3b8' }}>Sin asignar</span>
+            )}
+          </div>
+
           {hasAgreedAmount && (
             <div
               style={{
