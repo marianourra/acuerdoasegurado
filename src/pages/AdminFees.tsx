@@ -16,6 +16,61 @@ function isCreatedWithinLast30Days(createdAt: string): boolean {
   return Date.now() - new Date(createdAt).getTime() <= THIRTY_DAYS_MS;
 }
 
+function InvoicedStatusBadge({ isInvoiced }: { isInvoiced: boolean }) {
+  if (isInvoiced) {
+    return (
+      <span
+        aria-label="Facturado"
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 6,
+          padding: '6px 10px',
+          borderRadius: 999,
+          background: '#eff6ff',
+          border: '1px solid #bfdbfe',
+          color: '#1d4ed8',
+          fontSize: 12,
+          fontWeight: 700,
+          flexShrink: 0,
+          whiteSpace: 'nowrap',
+        }}
+      >
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
+          <path
+            fillRule="evenodd"
+            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+            clipRule="evenodd"
+          />
+        </svg>
+        Facturado
+      </span>
+    );
+  }
+
+  return (
+    <span
+      aria-label="Sin facturar"
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+        padding: '6px 10px',
+        borderRadius: 999,
+        background: '#f8fafc',
+        border: '1px solid #e2e8f0',
+        color: '#64748b',
+        fontSize: 12,
+        fontWeight: 700,
+        flexShrink: 0,
+        whiteSpace: 'nowrap',
+      }}
+    >
+      Sin facturar
+    </span>
+  );
+}
+
 const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '10px 12px',
@@ -259,6 +314,10 @@ export default function AdminFees() {
                         <div style={{ fontSize: 13, fontWeight: 600, color: '#334155' }}>
                           {claim.payment_date ? formatDate(claim.payment_date) : 'Pendiente'}
                         </div>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>
+                        <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600 }}>Facturación</div>
+                        <InvoicedStatusBadge isInvoiced={claim.is_invoiced} />
                       </div>
                     </div>
                   ))}
