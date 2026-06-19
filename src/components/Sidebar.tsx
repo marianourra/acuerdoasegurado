@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { useAdminStatus } from '../hooks/useAdminStatus';
+import { useUserRole } from '../hooks/useUserRole';
 
 type SidebarProps = {
   isOpen?: boolean;
@@ -53,7 +53,7 @@ const adminMenuItems = [
   {
     path: '/admin/claims',
     label: 'Reclamos',
-    match: (path: string) => path === '/admin/claims',
+    match: (path: string) => path.startsWith('/admin/claims'),
     icon: producerMenuItems[0].icon,
   },
   {
@@ -73,6 +73,22 @@ const adminMenuItems = [
           strokeWidth="2"
           strokeLinecap="round"
         />
+      </svg>
+    ),
+  },
+  {
+    path: '/admin/asistentes',
+    label: 'Asistentes',
+    match: (path: string) => path.startsWith('/admin/asistentes'),
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M10 10C12.2091 10 14 8.20914 14 6C14 3.79086 12.2091 2 10 2C7.79086 2 6 3.79086 6 6C6 8.20914 7.79086 10 10 10Z"
+          stroke="currentColor"
+          strokeWidth="2"
+        />
+        <path d="M3 17c0-3 3.1-5 7-5s7 2 7 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        <path d="M15 4l2 2-2 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
   },
@@ -117,11 +133,29 @@ const adminMenuItems = [
   // },
 ];
 
+const asistenteMenuItems = [
+  {
+    path: '/admin/claims',
+    label: 'Reclamos',
+    match: (path: string) => path.startsWith('/admin/claims'),
+    icon: producerMenuItems[0].icon,
+  },
+];
+
 export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
   const location = useLocation();
-  const isAdmin = useAdminStatus();
-  const showAdminMenu = isAdmin ?? location.pathname.startsWith('/admin');
-  const menuItems = showAdminMenu ? adminMenuItems : producerMenuItems;
+  const { role, loading } = useUserRole();
+
+  const menuItems = (() => {
+    if (!loading) {
+      if (role === 'admin') return adminMenuItems;
+      if (role === 'asistente') return asistenteMenuItems;
+      return producerMenuItems;
+    }
+    if (location.pathname.startsWith('/admin')) return adminMenuItems;
+    if (location.pathname.startsWith('/asistente')) return asistenteMenuItems;
+    return producerMenuItems;
+  })();
 
   const renderNav = (onItemClick?: () => void) => (
     <nav style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>

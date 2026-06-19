@@ -36,7 +36,12 @@ export type ClaimStatusStep = {
   order_index: number;
 };
 
-export const FINALIZED_STATUS_NAMES = ['Acordado', 'Sin responsabilidad', 'Sin acuerdo'] as const;
+export const FINALIZED_STATUS_NAMES = [
+  'Acordado',
+  'Sin responsabilidad',
+  'Sin acuerdo',
+  'Liquidado',
+] as const;
 
 const ACORDADO_STATUS_ID = 'feb85213-84b6-46cf-8872-faa3a6a1b01d';
 
@@ -154,7 +159,8 @@ export async function updateProducerClaimPasFields(
 }
 
 export type CreateClaimPayload = {
-  producer_id: string;
+  /** Opcional: admin puede crear reclamos sin productor asignado. */
+  producer_id?: string | null;
   company_id: string;
   status_id: string;
   client_name: string;
@@ -166,12 +172,16 @@ export type CreateClaimPayload = {
 
 export async function createClaim(payload: CreateClaimPayload): Promise<{ data: unknown | null; error: { message: string } | null }> {
   const row: Record<string, unknown> = {
-    producer_id: payload.producer_id,
     company_id: payload.company_id,
     status_id: payload.status_id,
     client_name: payload.client_name,
     type: payload.type,
   };
+  if (payload.producer_id != null && String(payload.producer_id).trim() !== '') {
+    row.producer_id = payload.producer_id;
+  } else {
+    row.producer_id = null;
+  }
   if (payload.client_phone != null && payload.client_phone.trim() !== '') {
     row.client_phone = payload.client_phone.trim();
   }

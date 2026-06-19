@@ -105,6 +105,38 @@ function ImpagoAlert() {
   );
 }
 
+function FacturadoBadge() {
+  return (
+    <span
+      className="admin-facturado-badge"
+      aria-label="Facturado"
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+        padding: '6px 10px',
+        borderRadius: 999,
+        background: '#eff6ff',
+        border: '1px solid #bfdbfe',
+        color: '#1d4ed8',
+        fontSize: 12,
+        fontWeight: 700,
+        flexShrink: 0,
+        whiteSpace: 'nowrap',
+      }}
+    >
+      <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
+        <path
+          fillRule="evenodd"
+          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+          clipRule="evenodd"
+        />
+      </svg>
+      Facturado
+    </span>
+  );
+}
+
 export default function AdminClaimCard({ claim, onEdit, onDelete }: AdminClaimCardProps) {
   const [expanded, setExpanded] = useState(false);
   const sections = getAdminClaimFieldSections(claim);
@@ -232,6 +264,7 @@ export default function AdminClaimCard({ claim, onEdit, onDelete }: AdminClaimCa
         </div>
 
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          {claim.is_invoiced && <FacturadoBadge />}
           {isImpago && <ImpagoAlert />}
           <span
             style={{

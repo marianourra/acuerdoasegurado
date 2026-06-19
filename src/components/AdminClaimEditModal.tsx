@@ -20,6 +20,8 @@ type AdminClaimEditModalProps = {
   saveError: string | null;
   onClose: () => void;
   onSave: () => void;
+  /** Si está definido, el asistente queda fijo (usuario asistente logueado). */
+  lockAsistenteId?: string | null;
 };
 
 const labelStyle: CSSProperties = {
@@ -88,6 +90,7 @@ export default function AdminClaimEditModal({
   saveError,
   onClose,
   onSave,
+  lockAsistenteId,
 }: AdminClaimEditModalProps) {
   const setNum = (key: keyof ClaimPatch) => (e: ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value;
@@ -104,7 +107,8 @@ export default function AdminClaimEditModal({
   };
 
   const setProducer = (e: ChangeEvent<HTMLSelectElement>) => {
-    setEditForm((f) => ({ ...f, producer_id: Number(e.target.value) }));
+    const v = e.target.value;
+    setEditForm((f) => ({ ...f, producer_id: v === '' ? null : Number(v) }));
   };
 
   const setDate = (key: 'presentation_date' | 'payment_date' | 'finished_at') => (e: ChangeEvent<HTMLInputElement>) => {
@@ -206,6 +210,7 @@ export default function AdminClaimEditModal({
 
           <Field label="Productor">
             <select value={editForm.producer_id ?? ''} onChange={setProducer} style={inputStyle}>
+              <option value="">— Sin productor —</option>
               {producers.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name ?? `Productor #${p.id}`}
@@ -215,14 +220,23 @@ export default function AdminClaimEditModal({
           </Field>
 
           <Field label="Asistente">
-            <select value={editForm.asistente_id ?? ''} onChange={setSelect('asistente_id')} style={inputStyle}>
-              <option value="">— Sin asignar —</option>
-              {asistentes.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.nombre}
-                </option>
-              ))}
-            </select>
+            {lockAsistenteId ? (
+              <input
+                type="text"
+                readOnly
+                value={asistentes.find((a) => a.id === lockAsistenteId)?.nombre ?? '—'}
+                style={{ ...inputStyle, background: '#f8fafc' }}
+              />
+            ) : (
+              <select value={editForm.asistente_id ?? ''} onChange={setSelect('asistente_id')} style={inputStyle}>
+                <option value="">— Sin asignar —</option>
+                {asistentes.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.nombre}
+                  </option>
+                ))}
+              </select>
+            )}
           </Field>
 
           <Field label="Abogado">

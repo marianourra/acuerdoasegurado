@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import UserProfile from '../components/UserProfile';
 import Sidebar from '../components/Sidebar';
-import { useAdminStatus } from '../hooks/useAdminStatus';
+import { useUserRole } from '../hooks/useUserRole';
+import { getHomePathForRole } from '../services/roleService';
 import logo from '../images/logo.png';
 
 type Props = {
@@ -13,9 +14,12 @@ type Props = {
 function MainLayout({ children }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
-  const isAdmin = useAdminStatus();
-  const showAdminHome = isAdmin ?? location.pathname.startsWith('/admin');
-  const homePath = showAdminHome ? '/admin/claims' : '/dashboard';
+  const { role, loading: roleLoading } = useUserRole();
+  const homePath = roleLoading
+    ? location.pathname.startsWith('/admin') || location.pathname.startsWith('/asistente')
+      ? '/admin/claims'
+      : '/dashboard'
+    : getHomePathForRole(role);
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc' }}>

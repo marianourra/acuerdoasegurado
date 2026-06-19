@@ -36,8 +36,8 @@ export default function UserProfile() {
     navigate('/login');
   };
 
-  const initials = auth.producerName ? auth.producerName.charAt(0).toUpperCase() : 'U';
-  const displayLabel = auth.producerNameLoaded ? (auth.producerName || 'Usuario') : '';
+  const initials = auth.displayName ? auth.displayName.charAt(0).toUpperCase() : 'U';
+  const displayLabel = auth.producerNameLoaded ? (auth.displayName || 'Usuario') : '';
 
   return (
     <div ref={dropdownRef} style={{ position: 'relative' }}>
@@ -127,7 +127,7 @@ export default function UserProfile() {
               Usuario
             </div>
             <div style={{ fontSize: 14, fontWeight: 500, color: '#0f172a' }}>
-              {auth.producerNameLoaded ? (auth.producerName ?? 'Usuario') : ''}
+              {auth.producerNameLoaded ? (auth.displayName ?? 'Usuario') : ''}
             </div>
           </div>
           <button

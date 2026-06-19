@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
 import LoadingSpinner from '../components/LoadingSpinner';
 import AdminProducerEditModal from '../components/AdminProducerEditModal';
-import { isCurrentUserAdmin } from '../services/adminService';
+import { ensureAdminAccess } from '../utils/adminAccess';
 import {
   getAdminProducers,
   createProducer,
@@ -75,14 +75,10 @@ export default function AdminProducers() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const admin = await isCurrentUserAdmin();
+      const allowed = await ensureAdminAccess(navigate);
       if (cancelled) return;
       setAdminChecked(true);
-      if (!admin) {
-        navigate('/dashboard', { replace: true });
-        return;
-      }
-      setIsAdmin(true);
+      if (allowed) setIsAdmin(true);
     })();
     return () => {
       cancelled = true;

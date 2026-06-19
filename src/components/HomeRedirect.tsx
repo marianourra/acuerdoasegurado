@@ -1,12 +1,13 @@
 import { Navigate } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
 import LoadingSpinner from './LoadingSpinner';
-import { useAdminStatus } from '../hooks/useAdminStatus';
+import { useUserRole } from '../hooks/useUserRole';
+import { getHomePathForRole } from '../services/roleService';
 
 export default function HomeRedirect() {
-  const isAdmin = useAdminStatus();
+  const { role, loading } = useUserRole();
 
-  if (isAdmin === null) {
+  if (loading) {
     return (
       <MainLayout>
         <LoadingSpinner text="Cargando..." />
@@ -14,5 +15,5 @@ export default function HomeRedirect() {
     );
   }
 
-  return <Navigate to={isAdmin ? '/admin/claims' : '/dashboard'} replace />;
+  return <Navigate to={getHomePathForRole(role)} replace />;
 }

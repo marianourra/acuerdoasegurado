@@ -5,11 +5,17 @@ import type { User } from '@supabase/supabase-js';
 type AuthContextType = {
   user: User | null;
   loading: boolean;
-  /** Nombre del productor (tabla producers). Cargado una vez por sesión, no se vuelve a pedir al cambiar de página. */
+  /** Nombre del productor (tabla producers). */
   producerName: string | null;
   producerNameLoaded: boolean;
-  /** is_admin del productor actual. Se carga junto con producerName. */
+  /** is_admin del productor actual. */
   isAdmin: boolean;
+  /** Usuario vinculado a un registro en asistentes. */
+  isAsistente: boolean;
+  asistenteId: string | null;
+  asistenteName: string | null;
+  /** Nombre para mostrar: productor o asistente. */
+  displayName: string | null;
 };
 
 const AuthContext = createContext<AuthContextType>({
@@ -18,6 +24,10 @@ const AuthContext = createContext<AuthContextType>({
   producerName: null,
   producerNameLoaded: false,
   isAdmin: false,
+  isAsistente: false,
+  asistenteId: null,
+  asistenteName: null,
+  displayName: null,
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -26,6 +36,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [producerName, setProducerName] = useState<string | null>(null);
   const [producerNameLoaded, setProducerNameLoaded] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isAsistente, setIsAsistente] = useState(false);
+  const [asistenteId, setAsistenteId] = useState<string | null>(null);
+  const [asistenteName, setAsistenteName] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -42,28 +55,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  // Cargar nombre del productor una sola vez cuando hay usuario; se mantiene en contexto al navegar
   useEffect(() => {
     if (!user?.id) {
       setProducerName(null);
       setProducerNameLoaded(false);
       setIsAdmin(false);
+      setIsAsistente(false);
+      setAsistenteId(null);
+      setAsistenteName(null);
       return;
     }
-    supabase
-      .from('producers')
-      .select('name, is_admin')
-      .eq('user_id', user.id)
-      .single()
-      .then(({ data, error }) => {
-        setProducerName(!error && data ? data.name : null);
-        setIsAdmin(!error && data ? data.is_admin === true : false);
-        setProducerNameLoaded(true);
-      });
+
+    Promise.all([
+      supabase.from('producers').select('name, is_admin').eq('user_id', user.id).maybeSingle(),
+      supabase.from('asistentes').select('id, nombre').eq('user_id', user.id).maybeSingle(),
+    ]).then(([producerRes, asistenteRes]) => {
+      const producer = producerRes.data;
+      const asistente = asistenteRes.data;
+
+      setProducerName(producer?.name ?? null);
+      setIsAdmin(producer?.is_admin === true);
+      setIsAsistente(Boolean(asistente?.id));
+      setAsistenteId(asistente?.id ?? null);
+      setAsistenteName(asistente?.nombre ?? null);
+      setProducerNameLoaded(true);
+    });
   }, [user?.id]);
 
+  const displayName = producerName ?? asistenteName;
+
   return (
-    <AuthContext.Provider value={{ user, loading, producerName, producerNameLoaded, isAdmin }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        producerName,
+        producerNameLoaded,
+        isAdmin,
+        isAsistente,
+        asistenteId,
+        asistenteName,
+        displayName,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

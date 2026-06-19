@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
-import { isCurrentUserAdmin } from '../services/adminService';
+import { getCurrentUserRole, getHomePathForRole } from '../services/roleService';
 import {
   clearRememberedLogin,
   loadRememberedLogin,
@@ -62,8 +62,8 @@ export default function Login() {
         } else {
           clearRememberedLogin();
         }
-        const admin = await isCurrentUserAdmin();
-        navigate(admin ? '/admin/claims' : '/dashboard');
+        const role = await getCurrentUserRole();
+        navigate(getHomePathForRole(role));
       }
     } catch (err: any) {
       console.error('🚨 EXCEPTION (failed to fetch probable):', err);

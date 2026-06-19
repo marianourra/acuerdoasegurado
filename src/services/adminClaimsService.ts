@@ -8,7 +8,7 @@ export type AdminClaimRow = {
   client_phone: string | null;
   company_id: string;
   client_company_id: string | null;
-  producer_id: number;
+  producer_id: number | null;
   status_id: string;
   type: ClaimTypeLetter | string | null;
   amount_claimed: number | null;
@@ -41,7 +41,7 @@ export type ClaimPatch = {
   client_phone?: string | null;
   company_id?: string;
   client_company_id?: string | null;
-  producer_id?: number;
+  producer_id?: number | null;
   status_id?: string;
   type?: ClaimTypeLetter | string | null;
   amount_claimed?: number | null;
@@ -88,7 +88,7 @@ export function buildSavePatch(form: ClaimPatch): ClaimPatch {
     client_phone: form.client_phone?.trim() || null,
     company_id: form.company_id,
     client_company_id: form.client_company_id || null,
-    producer_id: form.producer_id,
+    producer_id: form.producer_id ?? null,
     status_id: form.status_id,
     type: form.type || null,
     amount_agreed: form.amount_agreed ?? null,
@@ -105,14 +105,7 @@ export function buildSavePatch(form: ClaimPatch): ClaimPatch {
   };
 }
 
-export async function getAdminClaims(): Promise<{
-  data: AdminClaimRow[] | null;
-  error: { message: string } | null;
-}> {
-  const { data, error } = await supabase
-    .from('claims')
-    .select(
-      `
+const ADMIN_CLAIMS_SELECT = `
       id,
       claim_number,
       client_name,
@@ -166,8 +159,29 @@ export async function getAdminClaims(): Promise<{
         nombre,
         apellido
       )
-    `
-    )
+    `;
+
+export async function getAdminClaims(): Promise<{
+  data: AdminClaimRow[] | null;
+  error: { message: string } | null;
+}> {
+  const { data, error } = await supabase
+    .from('claims')
+    .select(ADMIN_CLAIMS_SELECT)
+    .order('updated_at', { ascending: false });
+
+  if (error) return { data: null, error: { message: error.message } };
+  return { data: (data as unknown as AdminClaimRow[]) ?? [], error: null };
+}
+
+export async function getAsistenteClaims(asistenteId: string): Promise<{
+  data: AdminClaimRow[] | null;
+  error: { message: string } | null;
+}> {
+  const { data, error } = await supabase
+    .from('claims')
+    .select(ADMIN_CLAIMS_SELECT)
+    .eq('asistente_id', asistenteId)
     .order('updated_at', { ascending: false });
 
   if (error) return { data: null, error: { message: error.message } };

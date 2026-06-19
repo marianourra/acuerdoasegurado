@@ -2,12 +2,13 @@ import type { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
 import LoadingSpinner from './LoadingSpinner';
-import { useAdminStatus } from '../hooks/useAdminStatus';
+import { useUserRole } from '../hooks/useUserRole';
+import { getHomePathForRole } from '../services/roleService';
 
 export default function ProducerOnlyRoute({ children }: { children: ReactNode }) {
-  const isAdmin = useAdminStatus();
+  const { role, loading } = useUserRole();
 
-  if (isAdmin === null) {
+  if (loading) {
     return (
       <MainLayout>
         <LoadingSpinner text="Cargando..." />
@@ -15,8 +16,8 @@ export default function ProducerOnlyRoute({ children }: { children: ReactNode })
     );
   }
 
-  if (isAdmin) {
-    return <Navigate to="/admin/claims" replace />;
+  if (role !== 'producer') {
+    return <Navigate to={getHomePathForRole(role)} replace />;
   }
 
   return <>{children}</>;
