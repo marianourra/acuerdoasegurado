@@ -23,6 +23,8 @@ export type AdminClaimRow = {
   description: string | null;
   claim_brief: string | null;
   internal_observations: string | null;
+  taller_inspeccion: string | null;
+  observaciones_pas: string | null;
   asistente_id: string | null;
   abogado_id: string | null;
   created_at: string;
@@ -127,6 +129,8 @@ const ADMIN_CLAIMS_SELECT = `
       description,
       claim_brief,
       internal_observations,
+      taller_inspeccion,
+      observaciones_pas,
       asistente_id,
       abogado_id,
       created_at,

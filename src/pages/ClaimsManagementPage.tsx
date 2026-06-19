@@ -23,6 +23,7 @@ import AdminClaimEditModal from '../components/AdminClaimEditModal';
 import ClaimsStatusCollapse from '../components/ClaimsStatusCollapse';
 import ClearFiltersButton from '../components/ClearFiltersButton';
 import { parseLocalDate } from '../utils/dateUtils';
+import { exportClaimsToExcel } from '../utils/exportClaimsExcel';
 import {
   GROUP_EN_TRAMITE,
   GROUP_FINALIZADOS,
@@ -91,6 +92,7 @@ export default function ClaimsManagementPage() {
   const [abogados, setAbogados] = useState<Abogado[]>([]);
   const [saveLoading, setSaveLoading] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [exportLoading, setExportLoading] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(ADMIN_DEFAULT_EXPANDED_SECTIONS);
 
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -338,6 +340,24 @@ export default function ClaimsManagementPage() {
     setTimeout(() => setSuccessMsg(null), 3000);
   };
 
+  const handleExportExcel = async () => {
+    setExportLoading(true);
+    setError(null);
+    const { data, error: exportErr } = await getAdminClaims();
+    setExportLoading(false);
+    if (exportErr) {
+      setError(exportErr.message);
+      return;
+    }
+    if (!data?.length) {
+      setError('No hay reclamos para exportar.');
+      return;
+    }
+    exportClaimsToExcel(data);
+    setSuccessMsg(`${data.length} reclamo${data.length !== 1 ? 's' : ''} exportado${data.length !== 1 ? 's' : ''} a Excel.`);
+    setTimeout(() => setSuccessMsg(null), 4000);
+  };
+
   if (!accessChecked || !hasAccess) {
     return (
       <MainLayout>
@@ -369,34 +389,69 @@ export default function ClaimsManagementPage() {
           >
             Admin — Reclamos
           </h1>
-          <Link
-            to={NEW_CLAIM_PATH}
-            style={{
-              textDecoration: 'none',
-              padding: '12px 20px',
-              borderRadius: 12,
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              color: 'white',
-              fontSize: 14,
-              fontWeight: 600,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path
-                d="M10 4V16M4 10H16"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            Crear reclamo
-          </Link>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            {isAdminUser && (
+              <button
+                type="button"
+                onClick={handleExportExcel}
+                disabled={exportLoading}
+                style={{
+                  padding: '12px 20px',
+                  borderRadius: 12,
+                  border: '1px solid #16a34a',
+                  background: '#fff',
+                  color: '#16a34a',
+                  fontSize: 14,
+                  fontWeight: 600,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  cursor: exportLoading ? 'not-allowed' : 'pointer',
+                  opacity: exportLoading ? 0.7 : 1,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M10 3v10M6 9l4 4 4-4M4 17h12"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                {exportLoading ? 'Exportando…' : 'Exportar Excel'}
+              </button>
+            )}
+            <Link
+              to={NEW_CLAIM_PATH}
+              style={{
+                textDecoration: 'none',
+                padding: '12px 20px',
+                borderRadius: 12,
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white',
+                fontSize: 14,
+                fontWeight: 600,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M10 4V16M4 10H16"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              Crear reclamo
+            </Link>
+          </div>
         </div>
 
         {successMsg && (

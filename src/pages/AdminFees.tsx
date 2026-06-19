@@ -74,7 +74,7 @@ export default function AdminFees() {
 
   const pendingFeesClaims = useMemo(() => {
     return claims
-      .filter((c) => isAcordadoClaim(c) && !c.is_invoiced)
+      .filter((c) => isAcordadoClaim(c))
       .map((c) => ({
         claim: c,
         fees: getClaimFeesAmount(c),
@@ -190,7 +190,7 @@ export default function AdminFees() {
                     Honorarios pendientes de liquidación
                   </h2>
                   <p style={{ margin: 0, fontSize: 13, color: '#64748b' }}>
-                    Casos en estado Acordado, sin facturar, con honorarios calculados.
+                    Casos en estado Acordado con honorarios calculados.
                   </p>
                 </div>
                 <div
