@@ -135,7 +135,14 @@ export default function AdminFees() {
         fees: getClaimFeesAmount(c),
       }))
       .filter((row) => row.fees != null && row.fees > 0)
-      .sort((a, b) => (a.claim.client_name ?? '').localeCompare(b.claim.client_name ?? ''));
+      .sort((a, b) => {
+        const dateA = a.claim.payment_date;
+        const dateB = b.claim.payment_date;
+        if (!dateA && !dateB) return 0;
+        if (!dateA) return 1;
+        if (!dateB) return -1;
+        return new Date(dateA).getTime() - new Date(dateB).getTime();
+      });
   }, [claims]);
 
   const totalPendingFees = useMemo(
