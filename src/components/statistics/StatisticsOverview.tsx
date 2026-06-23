@@ -16,8 +16,6 @@ const panelStyle: React.CSSProperties = {
   padding: 20,
 };
 
-const formatMoney = (n: number) => `$${n.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
-
 const formatDays = (n: number | null | undefined) =>
   n != null ? `${n.toLocaleString('es-AR', { maximumFractionDigits: 1 })} días` : '—';
 
@@ -164,54 +162,11 @@ export default function StatisticsOverview({ stats }: StatisticsOverviewProps) {
             Indicadores clave
           </h3>
 
-          <div className="stats-metric-row">
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6 }}>
-              <span style={{ fontWeight: 600, color: '#475569' }}>Monto acordado acumulado</span>
-              <span style={{ fontWeight: 800, color: '#0f172a' }}>{formatMoney(stats.totalAmountAgreed)}</span>
-            </div>
-            <div style={{ height: 10, borderRadius: 999, background: '#f1f5f9', overflow: 'hidden' }}>
-              <div
-                className="stats-metric-fill"
-                style={{
-                  width: `${Math.min(agreementPct, 100)}%`,
-                  height: '100%',
-                  background: 'linear-gradient(90deg, #f59e0b, #fbbf24)',
-                  borderRadius: 999,
-                  transition: 'width 0.5s ease, filter 0.2s ease',
-                }}
-              />
-            </div>
-          </div>
-
-          <div className="stats-metric-row">
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6 }}>
-              <span style={{ fontWeight: 600, color: '#475569' }}>Promedio por acuerdo</span>
-              <span style={{ fontWeight: 800, color: '#0f172a' }}>
-                {stats.avgAmountAgreed != null ? formatMoney(stats.avgAmountAgreed) : '—'}
-              </span>
-            </div>
-            <div style={{ height: 10, borderRadius: 999, background: '#f1f5f9', overflow: 'hidden' }}>
-              <div
-                className="stats-metric-fill"
-                style={{
-                  width: stats.avgAmountAgreed && stats.totalAmountAgreed > 0
-                    ? `${Math.min((stats.avgAmountAgreed / stats.totalAmountAgreed) * 100 * stats.withAgreement, 100)}%`
-                    : '0%',
-                  height: '100%',
-                  background: 'linear-gradient(90deg, #667eea, #764ba2)',
-                  borderRadius: 999,
-                  transition: 'width 0.5s ease, filter 0.2s ease',
-                }}
-              />
-            </div>
-          </div>
-
           <div
             style={{
               display: 'grid',
               gridTemplateColumns: '1fr 1fr',
               gap: 12,
-              marginTop: 4,
             }}
           >
             <div

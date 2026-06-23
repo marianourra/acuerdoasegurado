@@ -8,6 +8,7 @@ import { getAdminFeesClaims } from '../services/adminFeesService';
 import type { AdminClaimRow } from '../services/adminClaimsService';
 import { isAcordadoClaim } from '../services/claimsService';
 import { getClaimFeesAmount, formatMoney, formatDate } from '../utils/adminClaimFormat';
+import { computeMonthlyFeesStats } from '../utils/adminFeesStats';
 import { getAsistentes, type Asistente } from '../services/asistentesService';
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
@@ -150,6 +151,8 @@ export default function AdminFees() {
     [pendingFeesClaims]
   );
 
+  const monthlyFeesStats = useMemo(() => computeMonthlyFeesStats(claims), [claims]);
+
   const assistantBilling = useMemo(() => {
     const recentAssigned = claims.filter(
       (c) => c.asistente_id && c.created_at && isCreatedWithinLast30Days(c.created_at)
@@ -235,6 +238,55 @@ export default function AdminFees() {
           <LoadingSpinner text="Cargando honorarios..." size={48} inline />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            {/* Promedio mensual de honorarios */}
+            <section style={panelStyle}>
+              <h2 style={{ margin: '0 0 6px', fontSize: 18, fontWeight: 700, color: '#0f172a' }}>
+                Promedio mensual de honorarios
+              </h2>
+              <p style={{ margin: '0 0 20px', fontSize: 13, color: '#64748b' }}>
+                Casos en estado Acordado o Liquidado con honorarios calculados, según fecha de finalización,
+                pago o última actualización del reclamo.
+              </p>
+
+              <div
+                style={{
+                  display: 'grid',
+                  gap: 14,
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                }}
+              >
+                {monthlyFeesStats.map((stat) => (
+                  <div
+                    key={stat.days}
+                    style={{
+                      padding: '16px 18px',
+                      borderRadius: 12,
+                      border: '1px solid #e2e8f0',
+                      background: 'linear-gradient(135deg, #f8fafc 0%, #fff 100%)',
+                    }}
+                  >
+                    <div style={{ fontSize: 12, fontWeight: 700, color: '#64748b', marginBottom: 8 }}>
+                      {stat.label}
+                    </div>
+                    <div style={{ fontSize: 'clamp(22px, 4vw, 28px)', fontWeight: 800, color: '#5b21b6' }}>
+                      {formatMoney(stat.monthlyAverage)}
+                      <span style={{ fontSize: 14, fontWeight: 600, color: '#94a3b8' }}>/mes</span>
+                    </div>
+                    <div style={{ marginTop: 10, fontSize: 12, color: '#64748b', lineHeight: 1.5 }}>
+                      <div>
+                        Total en el período:{' '}
+                        <strong style={{ color: '#334155' }}>{formatMoney(stat.totalFees)}</strong>
+                      </div>
+                      <div>
+                        {stat.caseCount} caso{stat.caseCount !== 1 ? 's' : ''} · promedio sobre {stat.months}{' '}
+                        {stat.months === 1 ? 'mes' : 'meses'}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
             {/* Honorarios pendientes de cobro */}
             <section style={panelStyle}>
               <div

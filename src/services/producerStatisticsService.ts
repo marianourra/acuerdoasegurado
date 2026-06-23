@@ -29,7 +29,6 @@ export type CompanyStat = {
   finalized: number;
   closingSamples: number;
   avgCloseDays: number | null;
-  totalAgreed: number;
 };
 
 export type TypeStat = {
@@ -53,8 +52,6 @@ export type ProducerStatistics = {
   withAgreement: number;
   recentLast30Days: number;
   avgCloseDaysOverall: number | null;
-  avgAmountAgreed: number | null;
-  totalAmountAgreed: number;
   agreementRatePercent: number | null;
   byStatus: StatusStat[];
   byCompany: CompanyStat[];
@@ -84,8 +81,6 @@ export function buildProducerStatistics(claims: ClaimStatsRow[]): ProducerStatis
   let withAgreement = 0;
   let recentLast30Days = 0;
   const allCloseDays: number[] = [];
-  const agreedAmounts: number[] = [];
-  let totalAmountAgreed = 0;
 
   for (const claim of claims) {
     const status = claim.claim_statuses;
@@ -100,8 +95,6 @@ export function buildProducerStatistics(claims: ClaimStatsRow[]): ProducerStatis
 
     if (claim.amount_agreed != null && claim.amount_agreed > 0) {
       withAgreement += 1;
-      agreedAmounts.push(claim.amount_agreed);
-      totalAmountAgreed += claim.amount_agreed;
     }
 
     if (new Date(claim.created_at).getTime() >= thirtyDaysAgo) {
@@ -120,7 +113,6 @@ export function buildProducerStatistics(claims: ClaimStatsRow[]): ProducerStatis
           finalized: 0,
           closingSamples: 0,
           avgCloseDays: null,
-          totalAgreed: 0,
           closeDays: [],
         };
         companyMap.set(company.id, row);
@@ -133,9 +125,6 @@ export function buildProducerStatistics(claims: ClaimStatsRow[]): ProducerStatis
       if (closingDays != null) {
         row.closeDays.push(closingDays);
         allCloseDays.push(closingDays);
-      }
-      if (claim.amount_agreed != null && claim.amount_agreed > 0) {
-        row.totalAgreed += claim.amount_agreed;
       }
     }
 
@@ -164,8 +153,6 @@ export function buildProducerStatistics(claims: ClaimStatsRow[]): ProducerStatis
     withAgreement,
     recentLast30Days,
     avgCloseDaysOverall: average(allCloseDays),
-    avgAmountAgreed: average(agreedAmounts),
-    totalAmountAgreed,
     agreementRatePercent:
       claims.length > 0 ? Math.round((withAgreement / claims.length) * 1000) / 10 : null,
     byStatus: [...statusMap.values()].sort((a, b) => b.count - a.count),

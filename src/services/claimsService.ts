@@ -60,6 +60,19 @@ export function isAcordadoClaim(claim: {
   return claim.claim_statuses?.name?.trim().toLowerCase() === 'acordado';
 }
 
+export function isLiquidadoClaim(claim: {
+  claim_statuses?: { name?: string } | null;
+}): boolean {
+  return claim.claim_statuses?.name?.trim().toLowerCase() === 'liquidado';
+}
+
+export function isAcordadoOrLiquidadoClaim(claim: {
+  status_id?: string | null;
+  claim_statuses?: { id?: string; name?: string } | null;
+}): boolean {
+  return isAcordadoClaim(claim) || isLiquidadoClaim(claim);
+}
+
 /** Acordado con fecha de pago vencida y aún sin cobrar (sigue en estado Acordado). */
 export function isAcordadoImpago(claim: {
   payment_date?: string | null;

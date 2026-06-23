@@ -25,8 +25,6 @@ const VIEW_TABS: Array<{ id: StatsView; label: string }> = [
   { id: 'types', label: 'Por tipo' },
 ];
 
-const formatMoney = (n: number) => `$${n.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
-
 const formatDays = (n: number | null | undefined) =>
   n != null ? `${n.toLocaleString('es-AR', { maximumFractionDigits: 1 })} días` : '—';
 
@@ -351,9 +349,6 @@ export default function ProducerStatistics() {
                   </div>
                   <div>
                     <strong>Cierre promedio (tuyos):</strong> {formatDays(companyDetail.avgCloseDays)}
-                  </div>
-                  <div>
-                    <strong>Monto acordado acumulado:</strong> {formatMoney(companyDetail.totalAgreed)}
                   </div>
                 </div>
               </div>
