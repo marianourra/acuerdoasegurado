@@ -4,6 +4,7 @@ import { isAcordadoClaim, isAcordadoImpago, type ClaimTypeLetter } from '../serv
 import type { AdminClaimRow } from '../services/adminClaimsService';
 import { formatDate, formatMoney, getAdminClaimFieldSections, getClaimFeesAmount } from '../utils/adminClaimFormat';
 import CompanyLogo from './CompanyLogo';
+import ClientPhoneWhatsAppLink from './ClientPhoneWhatsAppLink';
 
 type AdminClaimCardProps = {
   claim: AdminClaimRow;
@@ -162,6 +163,11 @@ export default function AdminClaimCard({ claim, onEdit, onDelete }: AdminClaimCa
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1, minWidth: 200 }}>
           <div style={{ fontWeight: 800, fontSize: 'clamp(14px, 4vw, 16px)', wordBreak: 'break-word' }}>
             Reclamante: {claim.client_name ?? '—'}
+          </div>
+
+          <div style={{ fontSize: 12, color: '#64748b' }}>
+            <strong>Teléfono:</strong>{' '}
+            <ClientPhoneWhatsAppLink phone={claim.client_phone} />
           </div>
 
           {claim.type && claimTypeLabels[claim.type as ClaimTypeLetter] && (
@@ -370,7 +376,11 @@ export default function AdminClaimCard({ claim, onEdit, onDelete }: AdminClaimCa
                         wordBreak: 'break-word',
                       }}
                     >
-                      {field.value}
+                      {field.label === 'Teléfono' ? (
+                        <ClientPhoneWhatsAppLink phone={claim.client_phone} />
+                      ) : (
+                        field.value
+                      )}
                     </div>
                   </div>
                 ))}
