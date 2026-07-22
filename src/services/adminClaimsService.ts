@@ -1,6 +1,25 @@
 import { supabase } from './supabaseClient';
 import type { ClaimTypeLetter } from './claimsService';
 
+/** Novedad de gestión visible al productor: fecha de la novedad + comentario. */
+export type ProducerUpdate = {
+  date: string;
+  text: string;
+};
+
+/** Normaliza el valor crudo de la DB (jsonb) a un array de novedades válidas. */
+export function normalizeProducerUpdates(value: unknown): ProducerUpdate[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => {
+      if (!item || typeof item !== 'object') return null;
+      const date = typeof (item as any).date === 'string' ? (item as any).date : '';
+      const text = typeof (item as any).text === 'string' ? (item as any).text : '';
+      return { date, text };
+    })
+    .filter((u): u is ProducerUpdate => u != null);
+}
+
 export type AdminClaimRow = {
   id: number;
   claim_number: string | number | null;
@@ -25,6 +44,7 @@ export type AdminClaimRow = {
   internal_observations: string | null;
   taller_inspeccion: string | null;
   observaciones_pas: string | null;
+  producer_updates: ProducerUpdate[] | null;
   asistente_id: string | null;
   abogado_id: string | null;
   created_at: string;
@@ -57,6 +77,7 @@ export type ClaimPatch = {
   description?: string | null;
   claim_brief?: string | null;
   internal_observations?: string | null;
+  producer_updates?: ProducerUpdate[];
   asistente_id?: string | null;
   abogado_id?: string | null;
 };
@@ -79,6 +100,7 @@ export function claimToEditForm(claim: AdminClaimRow): ClaimPatch {
     description: claim.description,
     claim_brief: claim.claim_brief,
     internal_observations: claim.internal_observations,
+    producer_updates: normalizeProducerUpdates(claim.producer_updates),
     asistente_id: claim.asistente_id,
     abogado_id: claim.abogado_id,
   };
@@ -102,6 +124,9 @@ export function buildSavePatch(form: ClaimPatch): ClaimPatch {
     description: form.description?.trim() || null,
     claim_brief: form.claim_brief?.trim() || null,
     internal_observations: form.internal_observations?.trim() || null,
+    producer_updates: normalizeProducerUpdates(form.producer_updates)
+      .map((u) => ({ date: u.date, text: u.text.trim() }))
+      .filter((u) => u.date && u.text),
     asistente_id: form.asistente_id || null,
     abogado_id: form.abogado_id || null,
   };
@@ -131,6 +156,7 @@ const ADMIN_CLAIMS_SELECT = `
       internal_observations,
       taller_inspeccion,
       observaciones_pas,
+      producer_updates,
       asistente_id,
       abogado_id,
       created_at,

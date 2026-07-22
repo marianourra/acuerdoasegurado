@@ -14,6 +14,7 @@ import MainLayout from '../layouts/MainLayout';
 import LoadingSpinner from '../components/LoadingSpinner';
 import CompanyLogo from '../components/CompanyLogo';
 import { formatDateLocal } from '../utils/dateUtils';
+import { normalizeProducerUpdates } from '../services/adminClaimsService';
 
 const formatDate = formatDateLocal;
 
@@ -144,6 +145,10 @@ export default function ClaimDetail() {
   const isAcordado =
     claim.status_id === 'feb85213-84b6-46cf-8872-faa3a6a1b01d' ||
     claim.claim_statuses?.id === 'feb85213-84b6-46cf-8872-faa3a6a1b01d';
+
+  const producerUpdates = normalizeProducerUpdates(claim.producer_updates)
+    .filter((u) => u.text.trim())
+    .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
 
   const handleAdjuntarDocumentacion = () => {
     if (!claimType) return;
@@ -591,6 +596,62 @@ export default function ClaimDetail() {
                 {claim.description || '—'}
               </div>
             </section>
+
+            {/* Novedades de la gestión por fecha */}
+            {producerUpdates.length > 0 && (
+              <section style={{ marginBottom: 28 }}>
+                <h3
+                  style={{
+                    margin: '0 0 12px',
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: '#64748b',
+                    letterSpacing: '0.05em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Novedades de la gestión
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {producerUpdates.map((update, index) => (
+                    <div
+                      key={index}
+                      style={{
+                        display: 'flex',
+                        gap: 14,
+                        padding: 16,
+                        borderRadius: 12,
+                        background: '#f8fafc',
+                        border: '1px solid #e2e8f0',
+                      }}
+                    >
+                      <div
+                        style={{
+                          flexShrink: 0,
+                          fontSize: 13,
+                          fontWeight: 700,
+                          color: '#4338ca',
+                          minWidth: 96,
+                        }}
+                      >
+                        {update.date ? formatDate(update.date) : '—'}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 15,
+                          color: '#334155',
+                          lineHeight: 1.6,
+                          whiteSpace: 'pre-wrap',
+                          wordBreak: 'break-word',
+                        }}
+                      >
+                        {update.text}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
 
             {/* Montos (solo Acordado) */}
             {isAcordado && (

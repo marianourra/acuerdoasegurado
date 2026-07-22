@@ -285,6 +285,7 @@ export async function getMyClaimById(userId: string, claimId: number) {
       payment_date,
       taller_inspeccion,
       observaciones_pas,
+      producer_updates,
       claim_statuses!inner (
         id,
         name,

@@ -1,7 +1,7 @@
 import type { Dispatch, SetStateAction, CSSProperties, ChangeEvent, ReactNode } from 'react';
 import { claimTypeLabels } from '../constants/claimTypes';
 import type { ClaimTypeLetter } from '../services/claimsService';
-import type { AdminClaimRow, ClaimPatch } from '../services/adminClaimsService';
+import type { AdminClaimRow, ClaimPatch, ProducerUpdate } from '../services/adminClaimsService';
 import { formatAbogadoName } from '../services/abogadosService';
 import type { Abogado } from '../services/abogadosService';
 import type { Asistente } from '../services/asistentesService';
@@ -55,6 +55,11 @@ const sectionTitleStyle: CSSProperties = {
 
 const CLAIM_TYPES = Object.entries(claimTypeLabels) as [ClaimTypeLetter, string][];
 const FEES_PERCENT_OPTIONS = [10, 15, 20];
+
+function todayInputDate(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
 
 function SectionTitle({ children }: { children: ReactNode }) {
   return <div style={sectionTitleStyle}>{children}</div>;
@@ -113,6 +118,24 @@ export default function AdminClaimEditModal({
 
   const setDate = (key: 'presentation_date' | 'payment_date' | 'finished_at') => (e: ChangeEvent<HTMLInputElement>) => {
     setEditForm((f) => ({ ...f, [key]: e.target.value || null }));
+  };
+
+  const producerUpdates: ProducerUpdate[] = editForm.producer_updates ?? [];
+
+  const setProducerUpdates = (next: ProducerUpdate[]) => {
+    setEditForm((f) => ({ ...f, producer_updates: next }));
+  };
+
+  const addProducerUpdate = () => {
+    setProducerUpdates([{ date: todayInputDate(), text: '' }, ...producerUpdates]);
+  };
+
+  const patchProducerUpdate = (index: number, patch: Partial<ProducerUpdate>) => {
+    setProducerUpdates(producerUpdates.map((u, i) => (i === index ? { ...u, ...patch } : u)));
+  };
+
+  const removeProducerUpdate = (index: number) => {
+    setProducerUpdates(producerUpdates.filter((_, i) => i !== index));
   };
 
   return (
@@ -348,6 +371,93 @@ export default function AdminClaimEditModal({
           <Field label="Observaciones (visible al productor)" fullWidth>
             <textarea value={editForm.description ?? ''} onChange={setStr('description')} rows={3} style={{ ...inputStyle, resize: 'vertical' }} />
           </Field>
+
+          <div style={{ gridColumn: '1 / -1' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <label style={{ ...labelStyle, marginBottom: 0 }}>Novedades por fecha (visibles al productor)</label>
+              <button
+                type="button"
+                onClick={addProducerUpdate}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: 8,
+                  border: '1px solid #c7d2fe',
+                  background: '#eef2ff',
+                  color: '#4338ca',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                + Agregar novedad
+              </button>
+            </div>
+
+            {producerUpdates.length === 0 ? (
+              <p style={{ margin: 0, fontSize: 13, color: '#94a3b8' }}>
+                Sin novedades cargadas. Usá «Agregar novedad» para dejar un comentario fechado del avance.
+              </p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {producerUpdates.map((update, index) => (
+                  <div
+                    key={index}
+                    style={{
+                      display: 'flex',
+                      gap: 10,
+                      alignItems: 'flex-start',
+                      padding: 12,
+                      borderRadius: 10,
+                      border: '1px solid #e2e8f0',
+                      background: '#f8fafc',
+                    }}
+                  >
+                    <div style={{ flexShrink: 0 }}>
+                      <label style={{ ...labelStyle, fontSize: 11 }}>Fecha</label>
+                      <input
+                        type="date"
+                        value={update.date}
+                        onChange={(e) => patchProducerUpdate(index, { date: e.target.value })}
+                        style={{ ...inputStyle, width: 150 }}
+                      />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <label style={{ ...labelStyle, fontSize: 11 }}>Comentario</label>
+                      <textarea
+                        value={update.text}
+                        onChange={(e) => patchProducerUpdate(index, { text: e.target.value })}
+                        rows={2}
+                        placeholder="Detalle del avance de la gestión"
+                        style={{ ...inputStyle, resize: 'vertical' }}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeProducerUpdate(index)}
+                      aria-label="Quitar novedad"
+                      title="Quitar novedad"
+                      style={{
+                        marginTop: 22,
+                        flexShrink: 0,
+                        width: 34,
+                        height: 34,
+                        borderRadius: 8,
+                        border: '1px solid #fecaca',
+                        background: '#fef2f2',
+                        color: '#dc2626',
+                        fontSize: 16,
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        lineHeight: 1,
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
           <Field label="Resumen del asunto" fullWidth>
             <textarea value={editForm.claim_brief ?? ''} onChange={setStr('claim_brief')} rows={3} style={{ ...inputStyle, resize: 'vertical' }} />

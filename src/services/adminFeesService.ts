@@ -20,6 +20,7 @@ export async function getAdminFeesClaims(): Promise<{
       fees,
       is_invoiced,
       payment_date,
+      presentation_date,
       finished_at,
       updated_at,
       asistente_id,

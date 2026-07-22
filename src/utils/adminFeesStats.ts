@@ -3,11 +3,12 @@ import { isAcordadoOrLiquidadoClaim } from '../services/claimsService';
 import { getClaimFeesAmount } from './adminClaimFormat';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+const DAYS_PER_MONTH = 30;
 
 export const FEES_STATS_PERIODS = [
-  { days: 30, label: 'Últimos 30 días', months: 1 },
-  { days: 90, label: 'Últimos 90 días', months: 3 },
-  { days: 180, label: 'Últimos 180 días', months: 6 },
+  { days: 30, label: 'Últimos 30 días' },
+  { days: 90, label: 'Últimos 90 días' },
+  { days: 180, label: 'Últimos 180 días' },
 ] as const;
 
 export type MonthlyFeesStat = {
@@ -51,7 +52,10 @@ export function computeMonthlyFeesStats(claims: AdminClaimRow[]): MonthlyFeesSta
 
   const now = Date.now();
 
-  return FEES_STATS_PERIODS.map(({ days, label, months }) => {
+  return FEES_STATS_PERIODS.map(({ days, label }) => {
+    // El promedio es SIEMPRE mensual: se divide el total del stock de la ventana
+    // por la cantidad de meses que abarca el período (días / 30).
+    const months = days / DAYS_PER_MONTH;
     const inPeriod = feeClaims.filter((row) => isWithinLastDays(row.recognitionDate, days, now));
     const totalFees = inPeriod.reduce((sum, row) => sum + row.fees, 0);
     const monthlyAverage = Math.round((totalFees / months) * 100) / 100;
