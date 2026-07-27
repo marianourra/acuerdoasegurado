@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import Login from './pages/Login';
 import ResetPassword from './pages/ResetPassword';
+import LandingProducers from './pages/LandingProducers';
 import Dashboard from './pages/Dashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import ProducerOnlyRoute from './components/ProducerOnlyRoute';
@@ -28,6 +29,8 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/organizadores" element={<LandingProducers />} />
+      <Route path="/presentacion" element={<LandingProducers />} />
 
       <Route
         path="/dashboard"
