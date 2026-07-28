@@ -12,7 +12,7 @@ type AdminClaimEditModalProps = {
   editForm: ClaimPatch;
   setEditForm: Dispatch<SetStateAction<ClaimPatch>>;
   companies: { id: string; name: string }[];
-  producers: { id: number; name: string | null }[];
+  producers: { id: string; name: string | null }[];
   statuses: { id: string; name: string; color: string | null }[];
   asistentes: Asistente[];
   abogados: Abogado[];
@@ -113,7 +113,7 @@ export default function AdminClaimEditModal({
 
   const setProducer = (e: ChangeEvent<HTMLSelectElement>) => {
     const v = e.target.value;
-    setEditForm((f) => ({ ...f, producer_id: v === '' ? null : Number(v) }));
+    setEditForm((f) => ({ ...f, producer_id: v === '' ? null : v }));
   };
 
   const setDate = (key: 'presentation_date' | 'payment_date' | 'finished_at') => (e: ChangeEvent<HTMLInputElement>) => {

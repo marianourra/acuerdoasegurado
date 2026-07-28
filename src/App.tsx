@@ -5,6 +5,7 @@ import LandingProducers from './pages/LandingProducers';
 import Dashboard from './pages/Dashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import ProducerOnlyRoute from './components/ProducerOnlyRoute';
+import ProducerOrAdminRoute from './components/ProducerOrAdminRoute';
 import HomeRedirect from './components/HomeRedirect';
 import ClaimDetail from './pages/ClaimDetail.tsx';
 // Oculto temporalmente
@@ -18,6 +19,8 @@ import AdminNewClaim from './pages/AdminNewClaim';
 import AdminProducers from './pages/AdminProducers';
 import AdminCompanies from './pages/AdminCompanies';
 import AdminFees from './pages/AdminFees';
+import AdminEmailLogs from './pages/AdminEmailLogs';
+import AdminAuditLog from './pages/AdminAuditLog';
 import AdminAsistentes from './pages/AdminAsistentes';
 import AssistantClaims from './pages/AssistantClaims';
 import AssistantNewClaim from './pages/AssistantNewClaim';
@@ -89,9 +92,9 @@ export default function App() {
         path="/statistics"
         element={
           <ProtectedRoute>
-            <ProducerOnlyRoute>
+            <ProducerOrAdminRoute>
               <ProducerStatistics />
-            </ProducerOnlyRoute>
+            </ProducerOrAdminRoute>
           </ProtectedRoute>
         }
       />
@@ -150,6 +153,22 @@ export default function App() {
         element={
           <ProtectedRoute>
             <AdminFees />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/email-logs"
+        element={
+          <ProtectedRoute>
+            <AdminEmailLogs />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/audit"
+        element={
+          <ProtectedRoute>
+            <AdminAuditLog />
           </ProtectedRoute>
         }
       />

@@ -237,6 +237,11 @@ export default function AdminFees() {
     [pendingFeesClaims]
   );
 
+  const avgFeePerCase = useMemo(
+    () => (pendingFeesClaims.length > 0 ? totalPendingFees / pendingFeesClaims.length : 0),
+    [totalPendingFees, pendingFeesClaims.length]
+  );
+
   const [invoicingId, setInvoicingId] = useState<number | null>(null);
 
   const toggleInvoiced = async (claim: AdminClaimRow) => {
@@ -515,23 +520,45 @@ export default function AdminFees() {
                     Casos en estado Acordado con honorarios calculados.
                   </p>
                 </div>
-                <div
-                  style={{
-                    padding: '14px 18px',
-                    borderRadius: 12,
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    color: '#fff',
-                    minWidth: 200,
-                  }}
-                >
-                  <div style={{ fontSize: 11, fontWeight: 700, opacity: 0.9, marginBottom: 4 }}>
-                    TOTAL PENDIENTE DE COBRO
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+                  <div
+                    style={{
+                      padding: '14px 18px',
+                      borderRadius: 12,
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      color: '#fff',
+                      minWidth: 200,
+                    }}
+                  >
+                    <div style={{ fontSize: 11, fontWeight: 700, opacity: 0.9, marginBottom: 4 }}>
+                      TOTAL PENDIENTE DE COBRO
+                    </div>
+                    <div style={{ fontSize: 'clamp(22px, 5vw, 28px)', fontWeight: 800 }}>
+                      {formatMoney(totalPendingFees)}
+                    </div>
+                    <div style={{ fontSize: 12, opacity: 0.9, marginTop: 4 }}>
+                      {pendingFeesClaims.length} caso{pendingFeesClaims.length !== 1 ? 's' : ''}
+                    </div>
                   </div>
-                  <div style={{ fontSize: 'clamp(22px, 5vw, 28px)', fontWeight: 800 }}>
-                    {formatMoney(totalPendingFees)}
-                  </div>
-                  <div style={{ fontSize: 12, opacity: 0.9, marginTop: 4 }}>
-                    {pendingFeesClaims.length} caso{pendingFeesClaims.length !== 1 ? 's' : ''}
+                  <div
+                    style={{
+                      padding: '14px 18px',
+                      borderRadius: 12,
+                      background: '#fff',
+                      border: '1px solid #e2e8f0',
+                      minWidth: 200,
+                    }}
+                  >
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#667eea', marginBottom: 4 }}>
+                      PROMEDIO POR CASO
+                    </div>
+                    <div style={{ fontSize: 'clamp(22px, 5vw, 28px)', fontWeight: 800, color: '#0f172a' }}>
+                      {formatMoney(avgFeePerCase)}
+                    </div>
+                    <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>
+                      sobre {pendingFeesClaims.length} caso{pendingFeesClaims.length !== 1 ? 's' : ''} acordado
+                      {pendingFeesClaims.length !== 1 ? 's' : ''}
+                    </div>
                   </div>
                 </div>
               </div>

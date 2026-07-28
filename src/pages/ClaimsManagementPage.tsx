@@ -81,7 +81,7 @@ export default function ClaimsManagementPage() {
 
   const [claims, setClaims] = useState<AdminClaimRow[]>([]);
   const [companies, setCompanies] = useState<{ id: string; name: string }[]>([]);
-  const [producers, setProducers] = useState<{ id: number; name: string | null }[]>([]);
+  const [producers, setProducers] = useState<{ id: string; name: string | null }[]>([]);
   const [statuses, setStatuses] = useState<{ id: string; name: string; color: string | null }[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

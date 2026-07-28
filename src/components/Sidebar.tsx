@@ -124,6 +124,50 @@ const adminMenuItems = [
       </svg>
     ),
   },
+  {
+    path: '/statistics',
+    label: 'Estadísticas',
+    match: (path: string) => path === '/statistics',
+    icon: producerMenuItems[1].icon,
+  },
+  {
+    path: '/admin/email-logs',
+    label: 'Emails enviados',
+    match: (path: string) => path.startsWith('/admin/email-logs'),
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M3 5.5C3 4.94772 3.44772 4.5 4 4.5H16C16.5523 4.5 17 4.94772 17 5.5V14.5C17 15.0523 16.5523 15.5 16 15.5H4C3.44772 15.5 3 15.0523 3 14.5V5.5Z"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M3.5 5.5L10 10.5L16.5 5.5"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    ),
+  },
+  {
+    path: '/admin/audit',
+    label: 'Auditoría',
+    match: (path: string) => path.startsWith('/admin/audit'),
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M5 3h7l3 3v11a1 1 0 01-1 1H5a1 1 0 01-1-1V4a1 1 0 011-1z"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinejoin="round"
+        />
+        <path d="M7 9h6M7 12h6M7 15h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      </svg>
+    ),
+  },
   // Oculto temporalmente
   // {
   //   path: '/admin/transfers',

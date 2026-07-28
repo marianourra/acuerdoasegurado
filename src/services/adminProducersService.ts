@@ -1,7 +1,7 @@
 import { supabase } from './supabaseClient';
 
 export type AdminProducerRow = {
-  id: number;
+  id: string;
   user_id: string;
   name: string | null;
   email: string | null;
@@ -94,7 +94,7 @@ export function producerToEditForm(producer: AdminProducerRow): UpdateProducerPa
 }
 
 export async function updateAdminProducer(
-  id: number,
+  id: string,
   params: UpdateProducerParams
 ): Promise<{ data: AdminProducerRow | null; error: { message: string } | null }> {
   const { data, error } = await supabase

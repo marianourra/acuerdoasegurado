@@ -196,6 +196,35 @@ export async function getProducerClaimsForStats(userId: string): Promise<{
   return { data: (data as unknown as ClaimStatsRow[]) ?? [], error: null };
 }
 
+export async function getAllClaimsForStats(): Promise<{
+  data: ClaimStatsRow[] | null;
+  error: { message: string } | null;
+}> {
+  const { data, error } = await supabase.from('claims').select(
+    `
+      id,
+      type,
+      amount_agreed,
+      created_at,
+      presentation_date,
+      finished_at,
+      companies!company_id (
+        id,
+        name,
+        logo_url
+      ),
+      claim_statuses (
+        id,
+        name,
+        color
+      )
+    `
+  );
+
+  if (error) return { data: null, error: { message: error.message } };
+  return { data: (data as unknown as ClaimStatsRow[]) ?? [], error: null };
+}
+
 export async function getCompanyClosingBenchmarks(): Promise<{
   data: CompanyClosingBenchmark[] | null;
   error: { message: string } | null;

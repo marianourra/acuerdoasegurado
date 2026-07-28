@@ -17,7 +17,7 @@ type ClaimRecord = {
   claim_number: string | number | null;
   client_name: string | null;
   company_id: string | null;
-  producer_id: number | null;
+  producer_id: string | null;
   status_id: string | null;
 };
 
@@ -125,45 +125,67 @@ Deno.serve(async (req) => {
   const producerName = producer.name ?? '';
 
   const subject = 'Hemos conseguido un acuerdo en tu reclamo';
-  const html = `
-  <div style="background:#f1f5f9;padding:24px 0;margin:0;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
-      <tr>
-        <td align="center">
-          <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;border-collapse:separate;overflow:hidden;">
+  const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<title>${subject}</title>
+</head>
+<body style="margin:0;padding:0;background:#ffffff;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff;border-collapse:collapse;">
+    <tr>
+      <td align="left" style="padding:24px 32px;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;">
+        <div style="max-width:560px;">
+          <p style="font-size:16px;color:#0f172a;margin:0 0 16px;">Hola ${producerName || ''},</p>
+          <p style="font-size:16px;color:#334155;line-height:1.6;margin:0 0 12px;">
+            Te informamos que el reclamo de <strong>${clientName}</strong> contra la aseguradora <strong>${aseguradora}</strong>
+            ha sido <strong style="color:#16a34a;">acordado</strong>.
+          </p>
+          <p style="font-size:15px;color:#334155;line-height:1.6;margin:0 0 24px;">
+            Para más detalles ingresá a consultar su estado.
+          </p>
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
             <tr>
-              <td style="padding:32px 32px 8px;">
-                <p style="font-size:16px;color:#0f172a;margin:0 0 16px;">Hola ${producerName || ''},</p>
-                <p style="font-size:16px;color:#334155;line-height:1.6;margin:0 0 12px;">
-                  El reclamo de <strong>${clientName}</strong> contra la aseguradora <strong>${aseguradora}</strong>
-                  ha sido <strong style="color:#16a34a;">acordado</strong>.
-                </p>
-                <p style="font-size:15px;color:#334155;line-height:1.6;margin:0 0 24px;">
-                  Para más detalles ingresá a consultar su estado.
-                </p>
-                <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
-                  <tr>
-                    <td style="border-radius:10px;background:#667eea;">
-                      <a href="${appUrl}" style="display:inline-block;padding:12px 26px;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;border-radius:10px;">
-                        Consultar mi reclamo
-                      </a>
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:24px 32px 32px;border-top:1px solid #f1f5f9;">
-                <img src="${logoUrl}" alt="Acuerdo Asegurado" height="40" style="display:block;height:40px;margin-bottom:8px;" />
-                <p style="font-size:12px;color:#94a3b8;margin:0;">Acuerdo Asegurado</p>
+              <td style="border-radius:10px;background:#667eea;">
+                <a href="${appUrl}" style="display:inline-block;padding:12px 26px;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;border-radius:10px;">
+                  Consultar mi reclamo
+                </a>
               </td>
             </tr>
           </table>
-        </td>
-      </tr>
-    </table>
-  </div>
-  `;
+          <div style="margin-top:24px;padding-top:24px;border-top:1px solid #f1f5f9;">
+            <img src="${logoUrl}" alt="Acuerdo Asegurado" height="40" style="display:block;height:40px;margin-bottom:8px;border:0;" />
+            <p style="font-size:12px;color:#94a3b8;margin:0;">Acuerdo Asegurado</p>
+          </div>
+        </div>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  const logEmail = async (fields: {
+    status: 'sent' | 'failed';
+    providerMessageId?: string | null;
+    error?: string | null;
+  }) => {
+    const { error: logErr } = await supabase.from('email_logs').insert({
+      type: 'acordado',
+      claim_id: record.id,
+      claim_number: record.claim_number != null ? String(record.claim_number) : null,
+      client_name: record.client_name ?? null,
+      producer_id: record.producer_id,
+      recipient_email: producer.email,
+      recipient_name: producerName || null,
+      subject,
+      status: fields.status,
+      provider_message_id: fields.providerMessageId ?? null,
+      error: fields.error ?? null,
+    });
+    if (logErr) console.error('No se pudo registrar el email en email_logs:', logErr.message);
+  };
 
   const resendRes = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -181,8 +203,19 @@ Deno.serve(async (req) => {
 
   if (!resendRes.ok) {
     const detail = await resendRes.text();
+    await logEmail({ status: 'failed', error: detail });
     return json({ error: 'Fallo el envío del email', detail }, 502);
   }
 
-  return json({ sent: true, to: producer.email, claim: record.id });
+  let providerMessageId: string | null = null;
+  try {
+    const sentData = (await resendRes.json()) as { id?: string };
+    providerMessageId = sentData?.id ?? null;
+  } catch {
+    providerMessageId = null;
+  }
+
+  await logEmail({ status: 'sent', providerMessageId });
+
+  return json({ sent: true, to: producer.email, claim: record.id, id: providerMessageId });
 });

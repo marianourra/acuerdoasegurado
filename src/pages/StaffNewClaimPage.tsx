@@ -22,7 +22,7 @@ export default function StaffNewClaimPage() {
 
   const [selectedType, setSelectedType] = useState<ClaimType>(null);
   const [companies, setCompanies] = useState<{ id: string; name: string }[]>([]);
-  const [producers, setProducers] = useState<{ id: number; name: string | null }[]>([]);
+  const [producers, setProducers] = useState<{ id: string; name: string | null }[]>([]);
   const [companiesLoading, setCompaniesLoading] = useState(true);
   const [companiesError, setCompaniesError] = useState<string | null>(null);
 

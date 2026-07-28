@@ -27,7 +27,7 @@ export type AdminClaimRow = {
   client_phone: string | null;
   company_id: string;
   client_company_id: string | null;
-  producer_id: number | null;
+  producer_id: string | null;
   status_id: string;
   type: ClaimTypeLetter | string | null;
   amount_claimed: number | null;
@@ -52,7 +52,7 @@ export type AdminClaimRow = {
   companies: { id: string; name: string; logo_url: string | null } | null;
   client_companies: { id: string; name: string; logo_url: string | null } | null;
   claim_statuses: { id: string; name: string; color: string | null } | null;
-  producers: { id: number; name: string | null } | null;
+  producers: { id: string; name: string | null } | null;
   asistentes: { id: string; nombre: string } | null;
   abogados: { id: string; nombre: string; apellido: string } | null;
 };
@@ -63,7 +63,7 @@ export type ClaimPatch = {
   client_phone?: string | null;
   company_id?: string;
   client_company_id?: string | null;
-  producer_id?: number | null;
+  producer_id?: string | null;
   status_id?: string;
   type?: ClaimTypeLetter | string | null;
   amount_claimed?: number | null;

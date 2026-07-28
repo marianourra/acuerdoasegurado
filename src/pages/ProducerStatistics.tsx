@@ -9,11 +9,13 @@ import CompanyLogo from '../components/CompanyLogo';
 import '../components/statistics/statistics.css';
 import {
   buildProducerStatistics,
+  getAllClaimsForStats,
   getCompanyClosingBenchmarks,
   getProducerClaimsForStats,
   type CompanyClosingBenchmark,
   type ProducerStatistics,
 } from '../services/producerStatisticsService';
+import { useUserRole } from '../hooks/useUserRole';
 
 type StatsView = 'overview' | 'status' | 'companies' | 'closing' | 'types';
 
@@ -30,6 +32,8 @@ const formatDays = (n: number | null | undefined) =>
 
 export default function ProducerStatistics() {
   const { user, loading: authLoading } = useAuth();
+  const { role, loading: roleLoading } = useUserRole();
+  const isAdmin = role === 'admin';
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [benchmarkError, setBenchmarkError] = useState<string | null>(null);
@@ -41,12 +45,20 @@ export default function ProducerStatistics() {
   const [closingMode, setClosingMode] = useState<'mine' | 'system'>('mine');
 
   useEffect(() => {
-    if (!user) return;
+    if (isAdmin) setClosingMode('system');
+  }, [isAdmin]);
+
+  useEffect(() => {
+    if (!user || roleLoading) return;
     setLoading(true);
     setError(null);
     setBenchmarkError(null);
 
-    Promise.all([getProducerClaimsForStats(user.id), getCompanyClosingBenchmarks()])
+    const claimsPromise = isAdmin
+      ? getAllClaimsForStats()
+      : getProducerClaimsForStats(user.id);
+
+    Promise.all([claimsPromise, getCompanyClosingBenchmarks()])
       .then(([claimsRes, benchRes]) => {
         if (claimsRes.error) {
           setError(claimsRes.error.message);
@@ -62,7 +74,7 @@ export default function ProducerStatistics() {
         }
       })
       .finally(() => setLoading(false));
-  }, [user]);
+  }, [user, roleLoading, isAdmin]);
 
   const companyDetail = useMemo(() => {
     if (!stats || !selectedCompanyId) return null;
