@@ -27,7 +27,7 @@ export default function AdminTransfers() {
   const navigate = useNavigate();
   const [adminChecked, setAdminChecked] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [producers, setProducers] = useState<{ id: number; name: string | null }[]>([]);
+  const [producers, setProducers] = useState<{ id: string; name: string | null }[]>([]);
   const [transfers, setTransfers] = useState<AdminTransferRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
