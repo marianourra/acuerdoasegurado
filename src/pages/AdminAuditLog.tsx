@@ -39,9 +39,23 @@ const FIELD_LABELS: Record<string, string> = {
   taller_inspeccion: 'Taller / Inspección',
   observaciones_pas: 'Observaciones (visible al productor)',
   producer_updates: 'Novedades por fecha',
+  asistente_id: 'Asistente',
+  abogado_id: 'Abogado',
 };
 
 const MONEY_FIELDS = new Set(['amount_claimed', 'amount_agreed', 'producer_profit', 'fees']);
+
+/** Campos de texto libre: se muestran completos para poder auditar el contenido. */
+const TEXT_FIELDS = new Set([
+  'description',
+  'claim_brief',
+  'internal_observations',
+  'observaciones_pas',
+  'taller_inspeccion',
+  'producer_updates',
+  'client_name',
+  'client_phone',
+]);
 
 function formatDateTime(value: string): string {
   const d = new Date(value);
@@ -59,8 +73,17 @@ function formatMoney(n: number): string {
   return n.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
 }
 
-function truncate(text: string, max = 140): string {
-  return text.length > max ? `${text.slice(0, max)}…` : text;
+function formatProducerUpdates(value: unknown): string {
+  if (!Array.isArray(value) || value.length === 0) return '(vacío)';
+  return value
+    .map((u) => {
+      if (!u || typeof u !== 'object') return String(u);
+      const entry = u as { date?: unknown; text?: unknown };
+      const date = entry.date != null ? String(entry.date) : '—';
+      const text = entry.text != null ? String(entry.text).trim() : '';
+      return text ? `[${date}] ${text}` : `[${date}]`;
+    })
+    .join('\n');
 }
 
 type Maps = {
@@ -92,20 +115,23 @@ function resolveValue(field: string, value: unknown, maps: Maps): string {
       return value ? 'Sí' : 'No';
     case 'type':
       return claimTypeLabels[value as ClaimTypeLetter] ?? String(value);
-    case 'producer_updates': {
-      if (Array.isArray(value)) return `${value.length} novedad${value.length !== 1 ? 'es' : ''}`;
-      return '(actualizado)';
-    }
+    case 'producer_updates':
+      return formatProducerUpdates(value);
     case 'fees_percent':
       return `${value}%`;
     default:
       if (MONEY_FIELDS.has(field) && typeof value === 'number') return formatMoney(value);
-      return truncate(String(value));
+      return String(value);
   }
 }
 
 function fieldLabel(field: string): string {
   return FIELD_LABELS[field] ?? field;
+}
+
+function isLongTextChange(field: string, oldText: string, newText: string): boolean {
+  if (TEXT_FIELDS.has(field)) return true;
+  return oldText.length > 80 || newText.length > 80 || oldText.includes('\n') || newText.includes('\n');
 }
 
 function ActionBadge({ action }: { action: ClaimAuditRow['action'] }) {
@@ -212,6 +238,7 @@ export default function AdminAuditLog() {
     return logs.map((row) => {
       const actor = resolveActor(row.actor_id);
       const changeItems = (row.changes ?? []).map((c) => ({
+        field: c.field,
         label: fieldLabel(c.field),
         oldText: resolveValue(c.field, c.old, maps),
         newText: resolveValue(c.field, c.new, maps),
@@ -222,6 +249,7 @@ export default function AdminAuditLog() {
         row.claim_number,
         row.client_name,
         ...changeItems.map((ci) => ci.label),
+        ...changeItems.map((ci) => ci.oldText),
         ...changeItems.map((ci) => ci.newText),
       ]
         .filter(Boolean)
@@ -409,24 +437,77 @@ export default function AdminAuditLog() {
 
                   {row.action === 'update' && changeItems.length > 0 && (
                     <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      {changeItems.map((ci, idx) => (
-                        <div
-                          key={idx}
-                          style={{
-                            fontSize: 13,
-                            color: '#334155',
-                            background: '#f8fafc',
-                            border: '1px solid #eef2f7',
-                            borderRadius: 8,
-                            padding: '8px 10px',
-                          }}
-                        >
-                          <span style={{ fontWeight: 700 }}>{ci.label}: </span>
-                          <span style={{ color: '#94a3b8', textDecoration: 'line-through' }}>{ci.oldText}</span>
-                          <span style={{ margin: '0 6px', color: '#94a3b8' }}>→</span>
-                          <span style={{ color: '#0f172a', fontWeight: 600 }}>{ci.newText}</span>
-                        </div>
-                      ))}
+                      {changeItems.map((ci, idx) => {
+                        const long = isLongTextChange(ci.field, ci.oldText, ci.newText);
+                        if (long) {
+                          return (
+                            <div
+                              key={idx}
+                              style={{
+                                fontSize: 13,
+                                color: '#334155',
+                                background: '#f8fafc',
+                                border: '1px solid #eef2f7',
+                                borderRadius: 8,
+                                padding: '10px 12px',
+                              }}
+                            >
+                              <div style={{ fontWeight: 700, marginBottom: 8 }}>{ci.label}</div>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                <div>
+                                  <div style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', marginBottom: 4 }}>
+                                    Antes
+                                  </div>
+                                  <div
+                                    style={{
+                                      color: '#64748b',
+                                      whiteSpace: 'pre-wrap',
+                                      wordBreak: 'break-word',
+                                      lineHeight: 1.45,
+                                    }}
+                                  >
+                                    {ci.oldText}
+                                  </div>
+                                </div>
+                                <div>
+                                  <div style={{ fontSize: 11, fontWeight: 700, color: '#667eea', marginBottom: 4 }}>
+                                    Después
+                                  </div>
+                                  <div
+                                    style={{
+                                      color: '#0f172a',
+                                      fontWeight: 600,
+                                      whiteSpace: 'pre-wrap',
+                                      wordBreak: 'break-word',
+                                      lineHeight: 1.45,
+                                    }}
+                                  >
+                                    {ci.newText}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        }
+                        return (
+                          <div
+                            key={idx}
+                            style={{
+                              fontSize: 13,
+                              color: '#334155',
+                              background: '#f8fafc',
+                              border: '1px solid #eef2f7',
+                              borderRadius: 8,
+                              padding: '8px 10px',
+                            }}
+                          >
+                            <span style={{ fontWeight: 700 }}>{ci.label}: </span>
+                            <span style={{ color: '#94a3b8', textDecoration: 'line-through' }}>{ci.oldText}</span>
+                            <span style={{ margin: '0 6px', color: '#94a3b8' }}>→</span>
+                            <span style={{ color: '#0f172a', fontWeight: 600 }}>{ci.newText}</span>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
 
