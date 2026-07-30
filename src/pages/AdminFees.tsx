@@ -7,7 +7,7 @@ import { ensureAdminAccess } from '../utils/adminAccess';
 import { getAdminFeesClaims } from '../services/adminFeesService';
 import type { AdminClaimRow } from '../services/adminClaimsService';
 import { updateClaimById } from '../services/adminClaimsService';
-import { isAcordadoClaim, isAcordadoImpago, isAcordadoOrLiquidadoClaim } from '../services/claimsService';
+import { isAcordadoClaim, isAcordadoImpago, isAcordadoOrLiquidadoClaim, getClaimStatusesOrdered } from '../services/claimsService';
 import { getClaimFeesAmount, formatMoney, formatDate } from '../utils/adminClaimFormat';
 import { computeMonthlyFeesStats, getFeesRecognitionDate } from '../utils/adminFeesStats';
 
@@ -115,6 +115,59 @@ function InvoicedStatusBadge({
   );
 }
 
+function LiquidadoActionBadge({
+  onMark,
+  disabled,
+}: {
+  onMark: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onMark}
+      disabled={disabled}
+      title="Pasar reclamo a estado Liquidado"
+      aria-label="Marcar como Liquidado"
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 32,
+        height: 32,
+        padding: 0,
+        borderRadius: 999,
+        flexShrink: 0,
+        cursor: disabled ? 'wait' : 'pointer',
+        opacity: disabled ? 0.6 : 1,
+        background: 'transparent',
+        border: '1px solid #e2e8f0',
+        color: '#94a3b8',
+        transition: 'color 0.15s ease, border-color 0.15s ease, background 0.15s ease',
+      }}
+      onMouseEnter={(e) => {
+        if (disabled) return;
+        e.currentTarget.style.color = '#16a34a';
+        e.currentTarget.style.borderColor = '#86efac';
+        e.currentTarget.style.background = '#f0fdf4';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.color = '#94a3b8';
+        e.currentTarget.style.borderColor = '#e2e8f0';
+        e.currentTarget.style.background = 'transparent';
+      }}
+    >
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
+        <path
+          fillRule="evenodd"
+          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+          clipRule="evenodd"
+        />
+      </svg>
+    </button>
+  );
+}
+
 function ImpagoBadge() {
   return (
     <span
@@ -167,6 +220,9 @@ export default function AdminFees() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [claims, setClaims] = useState<AdminClaimRow[]>([]);
   const [asistentes, setAsistentes] = useState<Asistente[]>([]);
+  const [liquidadoStatus, setLiquidadoStatus] = useState<{ id: string; name: string; color: string | null } | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [savedRates, setSavedRates] = useState<Record<string, number>>({});
@@ -191,8 +247,8 @@ export default function AdminFees() {
     if (!isAdmin) return;
     setLoading(true);
     setError(null);
-    Promise.all([getAdminFeesClaims(), getAsistentes(), getAsistenteRates()])
-      .then(([claimsRes, asistentesRes, ratesRes]) => {
+    Promise.all([getAdminFeesClaims(), getAsistentes(), getAsistenteRates(), getClaimStatusesOrdered()])
+      .then(([claimsRes, asistentesRes, ratesRes, statusesRes]) => {
         if (claimsRes.error) {
           setError(claimsRes.error.message);
           setClaims([]);
@@ -204,6 +260,11 @@ export default function AdminFees() {
           const map: Record<string, number> = {};
           for (const r of ratesRes.data) map[rateKey(r.month, r.asistente_id)] = r.rate;
           setSavedRates(map);
+        }
+        if (statusesRes.data) {
+          const liquidado =
+            statusesRes.data.find((s) => s.name.trim().toLowerCase() === 'liquidado') ?? null;
+          setLiquidadoStatus(liquidado ? { id: liquidado.id, name: liquidado.name, color: liquidado.color } : null);
         }
       })
       .finally(() => setLoading(false));
@@ -243,9 +304,10 @@ export default function AdminFees() {
   );
 
   const [invoicingId, setInvoicingId] = useState<number | null>(null);
+  const [liquidatingId, setLiquidatingId] = useState<number | null>(null);
 
   const toggleInvoiced = async (claim: AdminClaimRow) => {
-    if (invoicingId != null) return;
+    if (invoicingId != null || liquidatingId != null) return;
     const next = !claim.is_invoiced;
     setInvoicingId(claim.id);
     setClaims((prev) => prev.map((c) => (c.id === claim.id ? { ...c, is_invoiced: next } : c)));
@@ -254,6 +316,42 @@ export default function AdminFees() {
     if (err) {
       setClaims((prev) => prev.map((c) => (c.id === claim.id ? { ...c, is_invoiced: !next } : c)));
       setError(`No se pudo actualizar la facturación: ${err.message}`);
+    }
+  };
+
+  const markAsLiquidado = async (claim: AdminClaimRow) => {
+    if (invoicingId != null || liquidatingId != null) return;
+    if (!liquidadoStatus) {
+      setError('No se encontró el estado Liquidado en la base de datos.');
+      return;
+    }
+    const prevStatusId = claim.status_id;
+    const prevStatuses = claim.claim_statuses;
+    setLiquidatingId(claim.id);
+    setClaims((prev) =>
+      prev.map((c) =>
+        c.id === claim.id
+          ? {
+              ...c,
+              status_id: liquidadoStatus.id,
+              claim_statuses: {
+                id: liquidadoStatus.id,
+                name: liquidadoStatus.name,
+                color: liquidadoStatus.color,
+              },
+            }
+          : c
+      )
+    );
+    const { error: err } = await updateClaimById(claim.id, { status_id: liquidadoStatus.id });
+    setLiquidatingId(null);
+    if (err) {
+      setClaims((prev) =>
+        prev.map((c) =>
+          c.id === claim.id ? { ...c, status_id: prevStatusId, claim_statuses: prevStatuses } : c
+        )
+      );
+      setError(`No se pudo marcar como Liquidado: ${err.message}`);
     }
   };
 
@@ -644,12 +742,27 @@ export default function AdminFees() {
                         </div>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>
-                        <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600 }}>Facturación</div>
-                        <InvoicedStatusBadge
-                          isInvoiced={claim.is_invoiced}
-                          onToggle={() => toggleInvoiced(claim)}
-                          disabled={invoicingId === claim.id}
-                        />
+                        <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600 }}>Acciones</div>
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexWrap: 'nowrap',
+                            alignItems: 'center',
+                            gap: 8,
+                          }}
+                        >
+                          <InvoicedStatusBadge
+                            isInvoiced={claim.is_invoiced}
+                            onToggle={() => toggleInvoiced(claim)}
+                            disabled={invoicingId === claim.id || liquidatingId === claim.id}
+                          />
+                          <LiquidadoActionBadge
+                            onMark={() => markAsLiquidado(claim)}
+                            disabled={
+                              !liquidadoStatus || invoicingId === claim.id || liquidatingId === claim.id
+                            }
+                          />
+                        </div>
                         {impago && <ImpagoBadge />}
                       </div>
                     </div>
