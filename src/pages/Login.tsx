@@ -113,20 +113,96 @@ export default function Login() {
 
   return (
     <div
+      className="login-page"
       style={{
+        position: 'relative',
         minHeight: '100vh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundImage: `url(${backImage})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
         padding: 20,
+        overflow: 'hidden',
       }}
     >
+      {/* Fondo: animación de ondas ~7s al cargar */}
       <div
+        aria-hidden
         style={{
+          position: 'absolute',
+          inset: 0,
+          zIndex: 0,
+          overflow: 'hidden',
+        }}
+      >
+        <div
+          className="login-bg-image"
+          style={{
+            position: 'absolute',
+            inset: '-12%',
+            backgroundImage: `url(${backImage})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+          }}
+        />
+        <svg
+          className="login-wave-layer login-wave-1"
+          viewBox="0 0 1440 900"
+          preserveAspectRatio="xMidYMid slice"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'none',
+          }}
+        >
+          <path
+            d="M-80 520 C 180 420, 360 640, 620 540 C 880 440, 1080 620, 1520 480 L 1520 900 L -80 900 Z"
+            fill="rgba(255,255,255,0.14)"
+          />
+        </svg>
+        <svg
+          className="login-wave-layer login-wave-2"
+          viewBox="0 0 1440 900"
+          preserveAspectRatio="xMidYMid slice"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'none',
+          }}
+        >
+          <path
+            d="M-80 600 C 220 500, 420 700, 700 600 C 980 500, 1180 680, 1520 560 L 1520 900 L -80 900 Z"
+            fill="rgba(255,255,255,0.1)"
+          />
+        </svg>
+        <svg
+          className="login-wave-layer login-wave-3"
+          viewBox="0 0 1440 900"
+          preserveAspectRatio="xMidYMid slice"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'none',
+          }}
+        >
+          <path
+            d="M-80 680 C 260 600, 480 760, 780 680 C 1060 600, 1240 740, 1520 660 L 1520 900 L -80 900 Z"
+            fill="rgba(255,255,255,0.08)"
+          />
+        </svg>
+      </div>
+
+      <div
+        className="login-card"
+        style={{
+          position: 'relative',
+          zIndex: 1,
           width: '100%',
           maxWidth: 440,
           background: 'white',
@@ -587,6 +663,100 @@ export default function Login() {
           </p>
         </div>
       </div>
+
+      <style>{`
+        /* Animación única ~7s: las ondas del fondo fluyen y luego quedan quietas */
+        @keyframes login-wave-flow {
+          0% {
+            transform: scale(1.12) translate3d(-4%, 2%, 0);
+          }
+          100% {
+            transform: scale(1.04) translate3d(0, 0, 0);
+          }
+        }
+
+        @keyframes login-wave-sweep-1 {
+          0% {
+            transform: translate3d(-6%, 4%, 0);
+            opacity: 0;
+          }
+          25% { opacity: 0.9; }
+          100% {
+            transform: translate3d(0, 0, 0);
+            opacity: 0.55;
+          }
+        }
+
+        @keyframes login-wave-sweep-2 {
+          0% {
+            transform: translate3d(-8%, 6%, 0);
+            opacity: 0;
+          }
+          30% { opacity: 0.85; }
+          100% {
+            transform: translate3d(0, 0, 0);
+            opacity: 0.45;
+          }
+        }
+
+        @keyframes login-wave-sweep-3 {
+          0% {
+            transform: translate3d(-10%, 8%, 0);
+            opacity: 0;
+          }
+          35% { opacity: 0.75; }
+          100% {
+            transform: translate3d(0, 0, 0);
+            opacity: 0.35;
+          }
+        }
+
+        @keyframes login-card-enter {
+          from {
+            opacity: 0;
+            transform: translateY(14px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .login-bg-image {
+          animation: login-wave-flow 7s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+          will-change: transform;
+        }
+
+        .login-wave-layer {
+          will-change: transform, opacity;
+        }
+
+        .login-wave-1 {
+          animation: login-wave-sweep-1 6.6s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+        }
+
+        .login-wave-2 {
+          animation: login-wave-sweep-2 7s 0.15s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+        }
+
+        .login-wave-3 {
+          animation: login-wave-sweep-3 7.2s 0.25s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+        }
+
+        .login-card {
+          animation: login-card-enter 0.9s 0.2s ease-out both;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .login-bg-image,
+          .login-wave-1,
+          .login-wave-2,
+          .login-wave-3,
+          .login-card {
+            animation: none !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
