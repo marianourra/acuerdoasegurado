@@ -304,6 +304,9 @@ CREATE POLICY "producers_update_own"
   TO authenticated
   USING (user_id = auth.uid())
   WITH CHECK (user_id = auth.uid());
+-- Nota: la política permite UPDATE de la propia fila, pero el trigger
+-- prevent_producer_privilege_escalation (supabase-producers-privilege-guard.sql)
+-- bloquea cambios de is_admin / user_id salvo is_app_admin().
 
 -- companies: admin CRUD
 DROP POLICY IF EXISTS "companies_insert_admin" ON public.companies;

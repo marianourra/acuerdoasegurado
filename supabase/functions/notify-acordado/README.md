@@ -23,8 +23,11 @@ supabase functions deploy notify-acordado --no-verify-jwt
 ```
 
 > Usamos `--no-verify-jwt` porque la seguridad se maneja con el header `x-webhook-secret`.
+> La function es **fail-closed**: si `WEBHOOK_SECRET` no está configurado, o el header no coincide, responde 401.
 
 ## 3. Cargar los secrets
+
+Generá un secreto largo y aleatorio (ej. `openssl rand -hex 32`). **No lo commitees** al repo.
 
 ```bash
 supabase secrets set \
@@ -32,6 +35,8 @@ supabase secrets set \
   NOTIFY_FROM_EMAIL="Acuerdo Asegurado <no-reply@tudominio.com>" \
   WEBHOOK_SECRET="un-string-secreto-largo"
 ```
+
+Si el secret estuvo expuesto alguna vez, **rotálo** (nuevo valor en secrets + mismo valor en el SQL del trigger) y redeployá la function.
 
 Opcionales (tienen valores por defecto):
 

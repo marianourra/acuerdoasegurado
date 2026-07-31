@@ -39,15 +39,10 @@ export default function Login() {
     setError(null);
 
     try {
-      console.log('➡️ intentanto login con:', email);
-
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-
-      console.log('✅ login data:', data);
-      console.log('❌ login error:', error);
 
       if (error) {
         // Traducir mensaje de error común
@@ -65,9 +60,9 @@ export default function Login() {
         const role = await getCurrentUserRole();
         navigate(getHomePathForRole(role));
       }
-    } catch (err: any) {
-      console.error('🚨 EXCEPTION (failed to fetch probable):', err);
-      setError(err?.message || 'Failed to fetch');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to fetch';
+      setError(message);
     } finally {
       setLoading(false);
     }

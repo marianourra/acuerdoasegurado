@@ -39,9 +39,12 @@ Deno.serve(async (req) => {
     return json({ error: 'Method not allowed' }, 405);
   }
 
-  // Validación de secreto compartido (el trigger envía este header).
-  const expectedSecret = Deno.env.get('WEBHOOK_SECRET');
-  if (expectedSecret && req.headers.get('x-webhook-secret') !== expectedSecret) {
+  // Fail-closed: sin WEBHOOK_SECRET configurado, o con header inválido, no procesar.
+  // trim() evita fallos por espacios/saltos de línea al setear el secret.
+  const expectedSecret = (Deno.env.get('WEBHOOK_SECRET') ?? '').trim();
+  const providedSecret = (req.headers.get('x-webhook-secret') ?? '').trim();
+  if (!expectedSecret || !providedSecret || providedSecret !== expectedSecret) {
+    console.error('notify-acordado: unauthorized (WEBHOOK_SECRET ausente o no coincide)');
     return json({ error: 'Unauthorized' }, 401);
   }
 

@@ -10,11 +10,11 @@ export function loadRememberedLogin(): RememberedLogin | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as RememberedLogin;
+    const parsed = JSON.parse(raw) as Partial<RememberedLogin>;
     if (!parsed.remember || !parsed.email) return null;
     return {
       email: parsed.email,
-      password: parsed.password ?? '',
+      password: typeof parsed.password === 'string' ? parsed.password : '',
       remember: true,
     };
   } catch {
