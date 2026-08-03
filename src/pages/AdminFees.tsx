@@ -298,10 +298,18 @@ export default function AdminFees() {
     [pendingFeesClaims]
   );
 
-  const avgFeePerCase = useMemo(
-    () => (pendingFeesClaims.length > 0 ? totalPendingFees / pendingFeesClaims.length : 0),
-    [totalPendingFees, pendingFeesClaims.length]
-  );
+  const avgFeePerCase = useMemo(() => {
+    let total = 0;
+    let count = 0;
+    for (const c of claims) {
+      if (!isAcordadoOrLiquidadoClaim(c)) continue;
+      const fees = getClaimFeesAmount(c);
+      if (fees == null || fees <= 0) continue;
+      total += fees;
+      count += 1;
+    }
+    return { average: count > 0 ? total / count : 0, count };
+  }, [claims]);
 
   const [invoicingId, setInvoicingId] = useState<number | null>(null);
   const [liquidatingId, setLiquidatingId] = useState<number | null>(null);
@@ -651,11 +659,11 @@ export default function AdminFees() {
                       PROMEDIO POR CASO
                     </div>
                     <div style={{ fontSize: 'clamp(22px, 5vw, 28px)', fontWeight: 800, color: '#0f172a' }}>
-                      {formatMoney(avgFeePerCase)}
+                      {formatMoney(avgFeePerCase.average)}
                     </div>
                     <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>
-                      sobre {pendingFeesClaims.length} caso{pendingFeesClaims.length !== 1 ? 's' : ''} acordado
-                      {pendingFeesClaims.length !== 1 ? 's' : ''}
+                      sobre {avgFeePerCase.count} caso{avgFeePerCase.count !== 1 ? 's' : ''} acordado
+                      {avgFeePerCase.count !== 1 ? 's' : ''} / liquidado{avgFeePerCase.count !== 1 ? 's' : ''}
                     </div>
                   </div>
                 </div>
