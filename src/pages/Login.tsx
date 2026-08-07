@@ -9,6 +9,7 @@ import {
 } from '../utils/rememberLogin';
 import logo from '../images/logo.png';
 import backImage from '../images/back.png';
+import LoginCompanyMarquee from '../components/LoginCompanyMarquee';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -192,6 +193,9 @@ export default function Login() {
           />
         </svg>
       </div>
+
+      {/* Cinta de logos de compañías (decorativa, sin texto de auspicio) */}
+      <LoginCompanyMarquee />
 
       <div
         className="login-card"

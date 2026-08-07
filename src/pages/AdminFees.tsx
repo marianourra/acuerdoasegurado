@@ -48,6 +48,22 @@ function monthKeyToLabel(key: string): string {
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
+/** Parsea un monto ingresado (acepta 15000, 15.000, 15.000,50 o 15000.50). */
+function parseFeeAmountFilter(raw: string): number | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  const cleaned = trimmed.replace(/[^\d.,-]/g, '');
+  if (!cleaned || cleaned === '-' || cleaned === '.' || cleaned === ',') return null;
+  let normalized = cleaned;
+  if (cleaned.includes(',') && cleaned.includes('.')) {
+    normalized = cleaned.replace(/\./g, '').replace(',', '.');
+  } else if (cleaned.includes(',')) {
+    normalized = cleaned.replace(',', '.');
+  }
+  const n = Number(normalized);
+  return Number.isFinite(n) ? n : null;
+}
+
 function InvoicedStatusBadge({
   isInvoiced,
   onToggle,
@@ -229,6 +245,7 @@ export default function AdminFees() {
   const [rateEdits, setRateEdits] = useState<Record<string, string>>({});
   const [expandedAssistantId, setExpandedAssistantId] = useState<string | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<string>(currentMonthKey());
+  const [feeAmountFilter, setFeeAmountFilter] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -287,6 +304,15 @@ export default function AdminFees() {
         return new Date(dateA).getTime() - new Date(dateB).getTime();
       });
   }, [claims]);
+
+  const feeFilterAmount = useMemo(() => parseFeeAmountFilter(feeAmountFilter), [feeAmountFilter]);
+
+  const filteredPendingFeesClaims = useMemo(() => {
+    if (feeFilterAmount == null) return pendingFeesClaims;
+    return pendingFeesClaims.filter(
+      (row) => row.fees != null && Math.abs(row.fees - feeFilterAmount) < 0.005
+    );
+  }, [pendingFeesClaims, feeFilterAmount]);
 
   const totalPendingFees = useMemo(
     () => pendingFeesClaims.reduce((sum, row) => sum + (row.fees ?? 0), 0),
@@ -697,13 +723,77 @@ export default function AdminFees() {
                 </div>
               )}
 
+              <div
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  alignItems: 'flex-end',
+                  gap: 10,
+                  marginBottom: 16,
+                }}
+              >
+                <div style={{ flex: '1 1 220px', minWidth: 180, maxWidth: 320 }}>
+                  <label
+                    htmlFor="fee-amount-filter"
+                    style={{ display: 'block', fontSize: 11, color: '#94a3b8', fontWeight: 700, marginBottom: 4 }}
+                  >
+                    FILTRAR POR MONTO DE HONORARIOS
+                  </label>
+                  <input
+                    id="fee-amount-filter"
+                    type="text"
+                    inputMode="decimal"
+                    value={feeAmountFilter}
+                    onChange={(e) => setFeeAmountFilter(e.target.value)}
+                    placeholder="Ej: 150000 o 150.000"
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      borderRadius: 10,
+                      border: '1px solid #e2e8f0',
+                      fontSize: 14,
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+                {feeAmountFilter.trim() !== '' && (
+                  <button
+                    type="button"
+                    onClick={() => setFeeAmountFilter('')}
+                    style={{
+                      padding: '10px 14px',
+                      borderRadius: 10,
+                      border: '1px solid #e2e8f0',
+                      background: '#fff',
+                      color: '#64748b',
+                      fontSize: 13,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Limpiar
+                  </button>
+                )}
+              </div>
+
+              {feeFilterAmount != null && (
+                <p style={{ margin: '0 0 12px', fontSize: 13, color: '#64748b' }}>
+                  Mostrando {filteredPendingFeesClaims.length} de {pendingFeesClaims.length} caso
+                  {pendingFeesClaims.length !== 1 ? 's' : ''} con honorarios de {formatMoney(feeFilterAmount)}
+                </p>
+              )}
+
               {pendingFeesClaims.length === 0 ? (
                 <p style={{ margin: 0, color: '#64748b', fontSize: 14 }}>
                   No hay honorarios pendientes de liquidación.
                 </p>
+              ) : filteredPendingFeesClaims.length === 0 ? (
+                <p style={{ margin: 0, color: '#64748b', fontSize: 14 }}>
+                  Ningún caso coincide con el monto de honorarios buscado.
+                </p>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {pendingFeesClaims.map(({ claim, fees }) => {
+                  {filteredPendingFeesClaims.map(({ claim, fees }) => {
                     const impago = isAcordadoImpago(claim);
                     return (
                     <div

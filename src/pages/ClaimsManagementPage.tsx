@@ -20,6 +20,7 @@ import { getAsistentes, type Asistente } from '../services/asistentesService';
 import { getAbogados, type Abogado } from '../services/abogadosService';
 import AdminClaimCard from '../components/AdminClaimCard';
 import AdminClaimEditModal from '../components/AdminClaimEditModal';
+import ConfirmModal from '../components/ConfirmModal';
 import ClaimsStatusCollapse from '../components/ClaimsStatusCollapse';
 import ClearFiltersButton from '../components/ClearFiltersButton';
 import { parseLocalDate } from '../utils/dateUtils';
@@ -92,6 +93,7 @@ export default function ClaimsManagementPage() {
   const [abogados, setAbogados] = useState<Abogado[]>([]);
   const [saveLoading, setSaveLoading] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [confirmAcordadoOpen, setConfirmAcordadoOpen] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(ADMIN_DEFAULT_EXPANDED_SECTIONS);
 
@@ -302,9 +304,10 @@ export default function ClaimsManagementPage() {
   const closeEdit = () => {
     setEditingClaim(null);
     setSaveError(null);
+    setConfirmAcordadoOpen(false);
   };
 
-  const handleSaveEdit = async () => {
+  const performSaveEdit = async () => {
     if (editingClaim == null) return;
     setSaveLoading(true);
     setSaveError(null);
@@ -314,6 +317,7 @@ export default function ClaimsManagementPage() {
     }
     const { error: err } = await updateClaimById(editingClaim.id, patch);
     setSaveLoading(false);
+    setConfirmAcordadoOpen(false);
     if (err) {
       setSaveError(err.message);
       return;
@@ -323,6 +327,25 @@ export default function ClaimsManagementPage() {
     const { data } = await loadClaims(scopedAsistenteId, isAdminUser);
     if (data) setClaims(data);
     setTimeout(() => setSuccessMsg(null), 3000);
+  };
+
+  const handleSaveEdit = () => {
+    if (editingClaim == null) return;
+
+    const acordadoStatus = statuses.find((s) => s.name.trim().toLowerCase() === 'acordado');
+    const nextStatusId = editForm.status_id ?? null;
+    const prevStatusId = editingClaim.status_id ?? editingClaim.claim_statuses?.id ?? null;
+    const transitioningToAcordado =
+      acordadoStatus != null &&
+      nextStatusId === acordadoStatus.id &&
+      prevStatusId !== acordadoStatus.id;
+
+    if (transitioningToAcordado) {
+      setConfirmAcordadoOpen(true);
+      return;
+    }
+
+    void performSaveEdit();
   };
 
   const handleDelete = async (id: number, clientName: string) => {
@@ -628,6 +651,22 @@ export default function ClaimsManagementPage() {
                 onClose={closeEdit}
                 onSave={handleSaveEdit}
                 lockAsistenteId={scopedAsistenteId}
+              />
+            )}
+
+            {confirmAcordadoOpen && (
+              <ConfirmModal
+                title="Confirmar estado Acordado"
+                message={
+                  'Vas a cambiar el estado del reclamo a Acordado.\n\n' +
+                  'Esto notificará por email al productor que el reclamo se ha resuelto.\n\n' +
+                  '¿Confirmás el cambio?'
+                }
+                confirmLabel="Confirmar y guardar"
+                cancelLabel="Cancelar"
+                confirmLoading={saveLoading}
+                onConfirm={() => void performSaveEdit()}
+                onCancel={() => setConfirmAcordadoOpen(false)}
               />
             )}
           </>

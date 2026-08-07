@@ -23,11 +23,13 @@ export default function AdminCompanies() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [name, setName] = useState('');
   const [logoUrl, setLogoUrl] = useState('');
+  const [loginLogoUrl, setLoginLogoUrl] = useState('');
   const [submitLoading, setSubmitLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   const [editName, setEditName] = useState('');
   const [editLogoUrl, setEditLogoUrl] = useState('');
+  const [editLoginLogoUrl, setEditLoginLogoUrl] = useState('');
   const [saveLoading, setSaveLoading] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -77,7 +79,11 @@ export default function AdminCompanies() {
     }
     setSubmitLoading(true);
     setSubmitError(null);
-    const { data, error: err } = await createCompany(trimmed, logoUrl.trim() || null);
+    const { data, error: err } = await createCompany(
+      trimmed,
+      logoUrl.trim() || null,
+      loginLogoUrl.trim() || null
+    );
     setSubmitLoading(false);
     if (err) {
       setSubmitError(err.message);
@@ -86,6 +92,7 @@ export default function AdminCompanies() {
     setSuccessMsg(`Compañía "${data?.name ?? trimmed}" creada.`);
     setName('');
     setLogoUrl('');
+    setLoginLogoUrl('');
     setShowCreateForm(false);
     await loadCompanies();
     setTimeout(() => setSuccessMsg(null), 3000);
@@ -95,6 +102,7 @@ export default function AdminCompanies() {
     setEditingCompany(company);
     setEditName(company.name);
     setEditLogoUrl(company.logo_url ?? '');
+    setEditLoginLogoUrl(company.login_logo_url ?? '');
     setSaveError(null);
   };
 
@@ -110,6 +118,7 @@ export default function AdminCompanies() {
     const { error: err } = await updateCompany(editingCompany.id, {
       name: editName,
       logo_url: editLogoUrl.trim() || null,
+      login_logo_url: editLoginLogoUrl.trim() || null,
     });
     setSaveLoading(false);
     if (err) {
@@ -236,22 +245,16 @@ export default function AdminCompanies() {
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
                     <CompanyLogo name={c.name} logoUrl={c.logo_url} size={36} />
+                    {c.login_logo_url && (
+                      <CompanyLogo name={`${c.name} login`} logoUrl={c.login_logo_url} size={36} />
+                    )}
                     <div style={{ minWidth: 0 }}>
                       <div style={{ fontWeight: 700, fontSize: 15, color: '#0f172a' }}>{c.name}</div>
-                      {c.logo_url && (
-                        <div
-                          style={{
-                            fontSize: 11,
-                            color: '#94a3b8',
-                            marginTop: 2,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          {c.logo_url}
-                        </div>
-                      )}
+                      <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>
+                        {c.logo_url ? 'Logo reclamos' : 'Sin logo reclamos'}
+                        {' · '}
+                        {c.login_logo_url ? 'Logo login' : 'Sin logo login'}
+                      </div>
                     </div>
                   </div>
                   <button
@@ -318,7 +321,7 @@ export default function AdminCompanies() {
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 4 }}>
-                  URL del logo (opcional)
+                  URL del logo (reclamos)
                 </label>
                 <input
                   type="url"
@@ -334,6 +337,31 @@ export default function AdminCompanies() {
                     boxSizing: 'border-box',
                   }}
                 />
+                <p style={{ margin: '6px 0 0', fontSize: 12, color: '#64748b' }}>
+                  Se muestra en el detalle y listados de reclamos.
+                </p>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 4 }}>
+                  URL del logo (login / carrete)
+                </label>
+                <input
+                  type="url"
+                  value={loginLogoUrl}
+                  onChange={(e) => setLoginLogoUrl(e.target.value)}
+                  placeholder="https://..."
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    borderRadius: 8,
+                    border: '1px solid #e2e8f0',
+                    fontSize: 14,
+                    boxSizing: 'border-box',
+                  }}
+                />
+                <p style={{ margin: '6px 0 0', fontSize: 12, color: '#64748b' }}>
+                  Se usa en la cinta de logos de la pantalla de inicio de sesión.
+                </p>
               </div>
               <button
                 type="submit"
@@ -399,8 +427,15 @@ export default function AdminCompanies() {
                 </div>
               )}
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-                <CompanyLogo name={editName} logoUrl={editLogoUrl} size={48} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
+                <div style={{ textAlign: 'center' }}>
+                  <CompanyLogo name={editName} logoUrl={editLogoUrl} size={48} />
+                  <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 4 }}>Reclamos</div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <CompanyLogo name={`${editName} login`} logoUrl={editLoginLogoUrl} size={48} />
+                  <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 4 }}>Login</div>
+                </div>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -424,7 +459,7 @@ export default function AdminCompanies() {
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 4 }}>
-                    URL del logo
+                    URL del logo (reclamos)
                   </label>
                   <input
                     type="url"
@@ -441,8 +476,30 @@ export default function AdminCompanies() {
                     }}
                   />
                   <p style={{ margin: '6px 0 0', fontSize: 12, color: '#64748b' }}>
+                    Se muestra en el detalle y listados de reclamos.
+                  </p>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 4 }}>
+                    URL del logo (login / carrete)
+                  </label>
+                  <input
+                    type="url"
+                    value={editLoginLogoUrl}
+                    onChange={(e) => setEditLoginLogoUrl(e.target.value)}
+                    placeholder="https://..."
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      borderRadius: 8,
+                      border: '1px solid #e2e8f0',
+                      fontSize: 14,
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                  <p style={{ margin: '6px 0 0', fontSize: 12, color: '#64748b' }}>
                     Subí el archivo en Supabase → Storage → <code>company-logos</code>, copiá la URL
-                    pública y pegala acá.
+                    pública y pegala acá. Se usa en la cinta de la pantalla de login.
                   </p>
                 </div>
               </div>
